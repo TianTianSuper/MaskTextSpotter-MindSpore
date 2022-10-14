@@ -1,0 +1,63 @@
+# Builtin Configurations(DO NOT CHANGE THESE CONFIGURATIONS unless you know exactly what you are doing)
+enable_modelarts: False
+data_url: ""
+train_url: ""
+checkpoint_url: ""
+data_path: "/cache/data"
+output_path: "/cache/train"
+load_path: "/cache/checkpoint_path"
+checkpoint_path: './checkpoint/'
+checkpoint_file: './checkpoint/mask_rcnn-12_7393.ckpt'
+device_target: Ascend
+enable_profiling: False
+
+pre_trained: "/cache/data"
+coco_root: "/cache/data"
+ckpt_path: ""
+ann_file: ""
+# ==============================================================================
+img_path: ''
+result_path: ''
+
+# Training options
+img_width: 1280
+img_height: 768
+keep_ratio: True
+flip_ratio: 0.5
+expand_ratio: 1.0
+
+max_instance_count: 128
+mask_shape: [28, 28]
+
+# resnet
+resnet_block: [3, 4, 6, 3]
+resnet_in_channels: [64, 256, 512, 1024]
+resnet_out_channels: [256, 512, 1024, 2048]
+
+# fpn
+fpn_in_channels: [256, 512, 1024, 2048]
+fpn_out_channels: 256
+fpn_num_outs: 5
+
+# rpn
+rpn_in_channels: 256
+rpn_feat_channels: 256
+rpn_loss_cls_weight: 1.0
+rpn_loss_reg_weight: 1.0
+rpn_cls_out_channels: 1
+rpn_target_means: [0., 0., 0., 0.]
+rpn_target_stds: [1.0, 1.0, 1.0, 1.0]
+
+# bbox_assign_sampler
+neg_iou_thr: 0.3
+pos_iou_thr: 0.7
+min_pos_iou: 0.3
+num_bboxes: 245520
+num_gts: 128
+num_expected_neg: 256
+num_expected_pos: 128
+
+# proposal
+activate_num_classes: 2
+use_sigmoid_cls: True
+
