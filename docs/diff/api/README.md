@@ -4,13 +4,14 @@
 
 ## Tensor的API
 
-| MindSpore                               | PyTorch          | 功能简述                                                     |
-| --------------------------------------- | ---------------- | ------------------------------------------------------------ |
-| [Tensor.clip()](./tensor_clip.md)       | Tensor.clamp()   | 裁剪Tensor，约束里面元素的最值                               |
-| [Tensor.copy()](./tensor_copy.md)       | Tensor.clone()   | 复制当前Tensor并返回                                         |
-| [Tensor.nonzero()](./tensor_nonzero.md) | Tensor.nonzero() | 返回非零元素的坐标。实现无差别，但是在mindspore.ops中也有相同的操作。 |
-| [Tensor.split()](./tensor_split.md)     | Tensor.split()   | 分割Tensor，但是Pytorch支持每个分割块有不同的shape           |
-| [Tensor.asnumpy()](./tensor2numpy.md)   | Tensor.numpy()   | 将Tensor转换为numpy.ndarray，两者api名称不一样。             |
+| MindSpore                               | PyTorch             | 功能简述                                                     |
+| --------------------------------------- | ------------------- | ------------------------------------------------------------ |
+| [Tensor.clip()](./tensor_clip.md)       | Tensor.clamp()      | 裁剪Tensor，约束里面元素的最值                               |
+| [Tensor.copy()](./tensor_copy.md)       | Tensor.clone()      | 复制当前Tensor并返回                                         |
+| [Tensor.nonzero()](./tensor_nonzero.md) | Tensor.nonzero()    | 返回非零元素的坐标。实现无差别，但是在mindspore.ops中也有相同的操作。 |
+| [Tensor.split()](./tensor_split.md)     | Tensor.split()      | 分割Tensor，但是Pytorch支持每个分割块有不同的shape           |
+| [Tensor.asnumpy()](./tensor2numpy.md)   | Tensor.numpy()      | 将Tensor转换为numpy.ndarray，两者api名称不一样。             |
+| Tensor.ndim                             | Tensor.ndimension() | 返回Tensor的维度数量                                         |
 
 总体而言，除了Tensor.split()因为传入参数不同，实现的功能可能有点差异，其余api大部分是名称有差异，使用时注意分辨即可。
 
