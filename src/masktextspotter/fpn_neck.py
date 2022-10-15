@@ -13,7 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """MaskRcnn feature pyramid network."""
-
+import os
+import sys
+sys.path.append(os.getcwd())
 import numpy as np
 import mindspore.nn as nn
 from mindspore.ops import operations as P
@@ -119,3 +121,16 @@ class FeatPyramidNeck(nn.Cell):
         for i in range(self.num_outs - self.fpn_layer):
             outs = outs + (self.maxpool(outs[3]),)
         return outs
+
+if __name__ == '__main__':
+    from src.model_utils import config
+    import numpy as np
+
+    fs = [[320, 192], [160, 96], [80, 48], [24, 40], [12, 20]]
+    fpn_ncek = FeatPyramidNeck([256, 512, 1024, 2048],
+                                256,
+                                5,
+                                fs)
+    input_data = (np.random.normal(0,0.1,(1,c,1280//(4*2**i), 768//(4*2**i))) \
+                    for i, c in enumerate([256, 512, 1024, 2048]))
+    output = fpn_ncek(tuple(Tensor(t) for t in input_data))

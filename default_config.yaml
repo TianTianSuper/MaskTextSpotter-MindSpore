@@ -19,6 +19,13 @@ ann_file: ""
 img_path: ''
 result_path: ''
 
+feature_shapes:
+- [192, 320]
+- [96, 160]
+- [48, 80]
+- [24, 40]
+- [12, 20]
+
 # Training options
 img_width: 1280
 img_height: 768

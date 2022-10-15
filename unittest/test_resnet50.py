@@ -1,5 +1,6 @@
+import os
 import sys
-sys.path.append('/home/tiantian/Documents/internship/MindSpore/OCR/MaskTextSpotter-MindSpore/')
+sys.path.append(os.getcwd())
 
 import pytest
 import pickle as pkl

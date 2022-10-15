@@ -10,7 +10,7 @@
 
 `docs/diff/api`: 介绍MindSpore与PyTorch实现同样功能算子的差异，多为本项目涉及到的算子。
 
-`docs/diff/code`: 计划存放本项目代码与作者源代码的差异，或将迁移至`notebook.md`。
+`docs/code`: 存放每个模块的说明文档，包含代码示例、与pytorch实现的比较等内容。
 
 ### src
 
