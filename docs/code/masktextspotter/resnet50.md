@@ -16,10 +16,13 @@ ResNet作为深度学习的基础模型，在本项目中作为backbone的一部
 ### 模块作用
 
 `def weight_init_ones(shape)`: 定义一个权重初始化的方法
+
 `def _conv(...)`: 返回初始化权重后的卷积层
+
 `def _BatchNorm2dInit(...)`: 对应pytorch实现中的FrozenBatchNorm2d，是构成resnet重要的一部分
 
 `class ResNetFea(nn.Cell)`: resnet的主要结构实现
+
 `class ResidualBlockUsing(nn.Cell)`: 残差块结构的主要实现
 
 ### 与pytorch的区别
@@ -27,6 +30,7 @@ ResNet作为深度学习的基础模型，在本项目中作为backbone的一部
 最大的区别在于先前提到的灵活性。因为pytorch实现的resnet要求在同一个文件下可以返回不同结构、深度和版本的resnet，因此加入了大量预定义的参数以此来定义模型。但是本项目只要求实现resnet50即可。除了实现首层所谓的stem(pytorch中的叫法)，其余四层可以固定下来。
 
 #### PyTorch __init__
+
 ```python
     def __init__(self, cfg):
         super(ResNet, self).__init__()
@@ -85,6 +89,7 @@ ResNet作为深度学习的基础模型，在本项目中作为backbone的一部
 ```
 
 #### MindSpore __init__
+
 ```python
     def __init__(self,
                  block,
@@ -137,6 +142,8 @@ ResNet作为深度学习的基础模型，在本项目中作为backbone的一部
                                        training=bn_training,
                                        weights_update=True)
 ```
+
+至于construct(forward)部分，计算的逻辑基本无差别。
 
 ## 心得
 
