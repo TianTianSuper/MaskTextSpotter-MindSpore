@@ -33,16 +33,10 @@ class SEGPostHandler(nn.Cell):
             proposals: list[Boxes]
             targets: list[Boxes]
         """
-        # Get the device we're operating on
-        # device = proposals[0].bbox.
         if self.config.MODEL.SEG.USE_SEG_POLY or self.config.MODEL.ROI_BOX_HEAD.USE_MASKED_FEATURE or self.config.MODEL.ROI_MASK_HEAD.USE_MASKED_FEATURE:
             gt_boxes = [target.copy_with_fields(['masks']) for target in targets]
         else:
             gt_boxes = [target.copy_with_fields([]) for target in targets]
-        # later cat of bbox requires all fields to be present for all bbox
-        # so we need to add a dummy for objectness that's missing
-        # for gt_box in gt_boxes:
-        #     gt_box.add_field("objectness", torch.ones(len(gt_box), device=device))
         proposals = [
             cat_boxlist_gt([proposal, gt_box])
             for proposal, gt_box in zip(proposals, gt_boxes)
@@ -64,7 +58,6 @@ class SEGPostHandler(nn.Cell):
         for i in range(3):
             choice = random.random()
             if choice < 0.5:
-                # shrink or expand
                 ratio = (np.randn((N,)) * 3 + 1) / 2.
                 height = height * ratio
                 ratio = (np.randn((N,)) * 3 + 1) / 2.
@@ -87,23 +80,13 @@ class SEGPostHandler(nn.Cell):
             pred: tensor of size N, 1, H, W
         """
         bitmap = self.binarize(pred)
-        # torch.cuda.synchronize()
-        # end_time = time.time()
-        # print('binarize time:', end_time - start_time)
         N, height, width = pred.shape[0], pred.shape[2], pred.shape[3]
-        # torch.cuda.synchronize()
-        # start_time = time.time()
-        bitmap_numpy = bitmap.asnumpy()  # The first channel
+        bitmap_numpy = bitmap.asnumpy() 
         pred_map_numpy = pred.asnumpy()
-        # torch.cuda.synchronize()
-        # end_time = time.time()
-        # print('gpu2numpy time:', end_time - start_time)
         boxes_batch = []
         rotated_boxes_batch = []
         polygons_batch = []
         scores_batch = []
-        # torch.cuda.synchronize()
-        # start_time = time.time()
         for batch_index in range(N):
             image_shape = image_shapes[batch_index]
             boxes, scores, rotated_boxes, polygons = self.boxes_from_bitmap(
@@ -113,23 +96,15 @@ class SEGPostHandler(nn.Cell):
                 boxes = self.aug_tensor_proposals(boxes)
             if boxes.shape[0] > self.top_n:
                 boxes = boxes[:self.top_n, :]
-                # _, top_index = scores.topk(self.top_n, 0, sorted=False)
-                # boxes = boxes[top_index, :]
-                # scores = scores[top_index]
-            # boxlist = BoxList(boxes, (width, height), mode="xyxy")
             boxlist = Boxes(boxes, (image_shape[1], image_shape[0]), mode="xyxy")
             if self.config.MODEL.SEG.USE_SEG_POLY or self.config.MODEL.ROI_BOX_HEAD.USE_MASKED_FEATURE or self.config.MODEL.ROI_MASK_HEAD.USE_MASKED_FEATURE:
                 masks = SegmentationMask(polygons, (image_shape[1], image_shape[0]))
                 boxlist.add_field('masks', masks)
             boxlist = boxlist.clip_to_image(remove_empty=False)
-            # boxlist = remove_small_boxes(boxlist, self.min_size)
             boxes_batch.append(boxlist)
             rotated_boxes_batch.append(rotated_boxes)
             polygons_batch.append(polygons)
             scores_batch.append(scores)
-        # torch.cuda.synchronize()
-        # end_time = time.time()
-        # print('loop time:', end_time - start_time)
         return boxes_batch, rotated_boxes_batch, polygons_batch, scores_batch
 
     def binarize(self, pred):

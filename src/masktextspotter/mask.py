@@ -213,7 +213,6 @@ class Polygons(object):
     """
 
     def __init__(self, polygons, size, mode):
-        # assert isinstance(polygons, list), '{}'.format(polygons)
         if isinstance(polygons, list):
             polygons = [Tensor(p, dtype=mindspore.float32) for p in polygons]
         elif isinstance(polygons, Polygons):
@@ -268,8 +267,8 @@ class Polygons(object):
 
         for poly in self.polygons:
             p = poly.clone()
-            p[0::2] = p[0::2] - box[0]  # .clamp(min=0, max=w)
-            p[1::2] = p[1::2] - box[1]  # .clamp(min=0, max=h)
+            p[0::2] = p[0::2] - box[0]
+            p[1::2] = p[1::2] - box[1]
             cropped_polygons.append(p)
 
         return Polygons(cropped_polygons, size=(w, h), mode=self.mode)
@@ -294,7 +293,6 @@ class Polygons(object):
     def convert(self, mode):
         width, height = self.size
         if mode == "mask":
-            # print([p.numpy() for p in self.polygons])
             try:
                 rles = mask_utils.frPyObjects(
                     [p.asnumpy() for p in self.polygons], height, width
@@ -306,7 +304,6 @@ class Polygons(object):
             rle = mask_utils.merge(rles)
             mask = mask_utils.decode(rle)
             mask = Tensor(mask)
-            # TODO add squeeze?
             return mask
         
     def set_size(self, size):
@@ -402,8 +399,8 @@ class CharPolygons(object):
         cropped_polygons = []
         for char_box in self.char_boxes:
             p = char_box.clone()
-            p[0::2] = p[0::2] - box[0]  # .clamp(min=0, max=w)
-            p[1::2] = p[1::2] - box[1]  # .clamp(min=0, max=h)
+            p[0::2] = p[0::2] - box[0]
+            p[1::2] = p[1::2] - box[1]
             cropped_polygons.append(p)
 
         return CharPolygons(
@@ -561,7 +558,6 @@ class SegmentationCharMask(object):
     def __init__(
         self, chars_boxes, words=None, use_char_ann=True, size=None, mode=None, char_num_classes=37
     ):
-        # self.chars_boxes=[CharPolygons(char_boxes, word=word, use_char_ann=use_char_ann, size=size, mode=mode) for char_boxes, word in zip(chars_boxes, words)]
         if words is None:
             self.chars_boxes = [
                 CharPolygons(
@@ -748,7 +744,7 @@ def shrink_rect(poly, shrink):
     xmax = max(poly[:, 0])
     ymin = min(poly[:, 1])
     ymax = max(poly[:, 1])
-    # assert xmax > xmin and ymax > ymin
+
     xc = (xmax + xmin) / 2
     yc = (ymax + ymin) / 2
     w = xmax - xmin

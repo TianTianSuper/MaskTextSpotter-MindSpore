@@ -9,7 +9,7 @@ import mindspore.common.dtype as mstype
 from mindspore import context
 
 from .bounding_box import Boxes
-from ..segmentation.mask import SegmentationMask
+from ..masktextspotter.mask import SegmentationMask
 import numpy as np
 import shapely
 from shapely.geometry import Polygon,MultiPoint
