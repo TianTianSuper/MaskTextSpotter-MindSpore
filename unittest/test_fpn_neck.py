@@ -12,7 +12,7 @@ from mindspore.common.initializer import Normal
 from src.masktextspotter.fpn_neck import FeatPyramidNeck
 from src.model_utils.config import config
 
-class TestResNet(object):
+class Testfpn(object):
     @pytest.mark.fpn
     def test_normal_input(self):
         fs = [[320, 192], [160, 96], [80, 48], [24, 40], [12, 20]]
