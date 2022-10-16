@@ -10,6 +10,7 @@ from mindspore import dtype as mstype
 from mindspore.ops import normal
 from mindspore.common.initializer import Normal
 from src.masktextspotter.spn import FpnBlock, SEGHead
+from src.masktextspotter.inference import SEGPostHandler
 from src.model_utils.config import config
 
 class TestSpn(object):
@@ -28,6 +29,18 @@ class TestSpn(object):
             test_part = SEGHead(256, config)
             input_data = Tensor(np.ones(327680).reshape((1, 5, 256, 16, 16)).T, mstype.float32)
             output = test_part(input_data)
+    
+    @pytest.mark.spn
+    def test_SegPost(self):
+        # Warning: This part is delayed.
+        test_part = SEGPostHandler(config)
+        input_data = Tensor(np.ones(327680).reshape((1, 5, 256, 16, 16)).T, mstype.float32)
+        img_size = Tensor((16,16), dtype=mstype.float32)
+        output = test_part(input_data, img_size, input_data)
 
 if __name__ == '__main__':
+    from src.model_utils.config import config
+    from mindspore import context
+    context.set_context(device_target='GPU',mode=context.PYNATIVE_MODE)
+
     pytest.main(['-vv','-s','--html=unittest/results/spn.html', '-m=spn'])

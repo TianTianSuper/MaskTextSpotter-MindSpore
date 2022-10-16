@@ -1,12 +1,16 @@
-from mindspore import nn
+import os
+import sys
+sys.path.append(os.getcwd())
+
+from mindspore import nn, Parameter
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore import context
 
-from ..model_utils.blocks import ConvBnReluBlock
-from .inference import SEGPostHandler
-from .loss import SEGLoss
+from src.model_utils.blocks import ConvBnReluBlock
+from src.masktextspotter.inference import SEGPostHandler
+from src.masktextspotter.loss import SEGLoss
 
 
 if context.get_context("device_target") == "Ascend":
@@ -24,15 +28,15 @@ class FpnBlock(nn.Cell):
                               has_bias=has_bias, weight_init='HeUniform')
         self.sample = nn.ResizeBilinear() # Q1: 无法使用最临近方法做上采样，已用这个代替
         self.scale = scale
-        self.shape : Tensor
+        # self.shape = Parameter(Tensor(), name="shape", requires_grad=False)
 
     def construct(self, x):
         x = self.conv(x)
-        if self.shape is None:
-            front = x.shape[0:2]
-            later = tuple([i*self.scale for i in x.shape[2:]]) # TODO 3: 待优化的处理，实现只输入scale_factor就可以初始化，而且在init里面初始化好了
-            self.shape = front + later            
-        x = self.sample(x, size=self.shape)
+        # if self.shape == None:
+        #     front = x.shape[0:2]
+        #     later = tuple([i*self.scale for i in x.shape[2:]]) # TODO 3: 待优化的处理，实现只输入scale_factor就可以初始化，而且在init里面初始化好了
+        #     self.shape = front + later            
+        x = self.sample(x, scale_factor=self.scale)
         return x
 
 class SEGHead(nn.Cell):
@@ -53,8 +57,9 @@ class SEGHead(nn.Cell):
             nn.Sigmoid()
         ])
         # C2: 此后对应源代码的PPM，还有权重初始化，个人认为mindspore不用这么做
+        # 因为源代码预设参数的值设置成了false，处于禁止状态
 
-        self.concat = P.Concat(-1)
+        self.concat = P.Concat(1)
     
     def construct(self, x):
         # C3: 此处对应源代码PPM的识别处理，暂未明白什么是PPM
@@ -73,7 +78,7 @@ class SEG(nn.Cell):
     def __init__(self, config, train_status=True):
         super(SEG, self).__init__()
 
-        in_channels = config.MODEL.BACKBONE.OUT_CHANNELS # C4: 回看
+        in_channels = config.fpn_out_channels
         self.head = SEGHead(in_channels, config)
         self.box_selector = SEGPostHandler(config, train_status=train_status)
         self.loss = SEGLoss(config)
@@ -92,3 +97,14 @@ class SEG(nn.Cell):
             boxes, rotated_boxes, polygons, scores = self.box_selector(preds, image_shapes)
             results = {'rotated_boxes': rotated_boxes, 'polygons': polygons, 'preds': preds, 'scores': scores}
             return boxes, results
+
+if __name__ == '__main__':
+    from src.model_utils.config import config
+    import numpy as np
+    from mindspore import context
+    context.set_context(device_target='GPU',mode=context.PYNATIVE_MODE)
+
+
+    test_part = SEGHead(256, config)
+    input_data = Tensor(np.ones(327680).reshape((1, 5, 256, 16, 16)).T, mstype.float32)
+    output = test_part(input_data)

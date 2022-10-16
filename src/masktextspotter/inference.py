@@ -15,13 +15,13 @@ from shapely.geometry import Polygon
 class SEGPostHandler(nn.Cell):
     def __init__(self, config, train_status=True):
         super(SEGPostHandler, self).__init__()
-        self.top_n = config.MODEL.SEG.TOP_N_TRAIN
+        self.top_n = config.top_n_train
         if not train_status:
-            self.top_n = config.MODEL.SEG.TOP_N_TEST
+            self.top_n = config.top_n_test
 
-        self.binary_thresh = config.MODEL.SEG.BINARY_THRESH
-        self.box_thresh = config.MODEL.SEG.BOX_THRESH
-        self.min_size = config.MODEL.SEG.MIN_SIZE
+        self.binary_thresh = config.binary_thresh
+        self.box_thresh = config.box_thresh
+        self.min_size = config.min_size
         self.config = config
 
         # utils
@@ -33,15 +33,11 @@ class SEGPostHandler(nn.Cell):
             proposals: list[Boxes]
             targets: list[Boxes]
         """
-        if self.config.MODEL.SEG.USE_SEG_POLY or self.config.MODEL.ROI_BOX_HEAD.USE_MASKED_FEATURE or self.config.MODEL.ROI_MASK_HEAD.USE_MASKED_FEATURE:
-            gt_boxes = [target.copy_with_fields(['masks']) for target in targets]
-        else:
-            gt_boxes = [target.copy_with_fields([]) for target in targets]
+        gt_boxes = [target.copy_with_fields(['masks']) for target in targets]
         proposals = [
             cat_boxlist_gt([proposal, gt_box])
             for proposal, gt_box in zip(proposals, gt_boxes)
         ]
-
         return proposals
 
     def aug_tensor_proposals(self, boxes):
@@ -97,9 +93,8 @@ class SEGPostHandler(nn.Cell):
             if boxes.shape[0] > self.top_n:
                 boxes = boxes[:self.top_n, :]
             boxlist = Boxes(boxes, (image_shape[1], image_shape[0]), mode="xyxy")
-            if self.config.MODEL.SEG.USE_SEG_POLY or self.config.MODEL.ROI_BOX_HEAD.USE_MASKED_FEATURE or self.config.MODEL.ROI_MASK_HEAD.USE_MASKED_FEATURE:
-                masks = SegmentationMask(polygons, (image_shape[1], image_shape[0]))
-                boxlist.add_field('masks', masks)
+            masks = SegmentationMask(polygons, (image_shape[1], image_shape[0]))
+            boxlist.add_field('masks', masks)
             boxlist = boxlist.clip_to_image(remove_empty=False)
             boxes_batch.append(boxlist)
             rotated_boxes_batch.append(rotated_boxes)
@@ -108,14 +103,7 @@ class SEGPostHandler(nn.Cell):
         return boxes_batch, rotated_boxes_batch, polygons_batch, scores_batch
 
     def binarize(self, pred):
-        if self.config.MODEL.SEG.USE_MULTIPLE_THRESH:
-            binary_maps = []
-            for thre in self.config.MODEL.SEG.MULTIPLE_THRESH:
-                binary_map = pred > thre
-                binary_maps.append(binary_map)
-            return self.concat(binary_maps)
-        else:
-            return pred > self.binary_thresh
+        return pred > self.binary_thresh
 
     def boxes_from_bitmap(self, pred, bitmap, dest_width, dest_height):
         """
@@ -157,14 +145,14 @@ class SEGPostHandler(nn.Cell):
             if not self.training and self.box_thresh > score:
                 continue
             if polygon.shape[0] > 2:
-                polygon = self.unclip(polygon, expand_ratio=self.config.MODEL.SEG.EXPAND_RATIO)
+                polygon = self.unclip(polygon, expand_ratio=self.config.expand_rate)
                 if len(polygon) > 1:
                     continue
             else:
                 continue
             # polygon = polygon.reshape(-1, 2)
             polygon = polygon.reshape(-1)
-            box = self.unclip(points, expand_ratio=self.config.MODEL.SEG.BOX_EXPAND_RATIO).reshape(-1, 2)
+            box = self.unclip(points, expand_ratio=self.config.expand_rate).reshape(-1, 2)
             box = np.array(box)
             box[:, 0] = np.clip(np.round(box[:, 0] / width * dest_width), 0, dest_width)
             box[:, 1] = np.clip(
@@ -265,7 +253,8 @@ class SEGPostHandler(nn.Cell):
     
     def construct(self, seg_output, image_shapes, targets=None):
         sampled_boxes = []
-        boxes_batch, rotated_boxes_batch, polygons_batch, scores_batch = self.forward_for_single_feature_map(seg_output, image_shapes)
+        boxes_batch, rotated_boxes_batch, polygons_batch, scores_batch \
+             = self.forward_for_single_feature_map(seg_output, image_shapes)
         if not self.training:
             return boxes_batch, rotated_boxes_batch, polygons_batch, scores_batch
         sampled_boxes.append(boxes_batch)

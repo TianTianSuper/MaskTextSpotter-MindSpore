@@ -46,14 +46,14 @@ fpn_in_channels: [256, 512, 1024, 2048]
 fpn_out_channels: 256
 fpn_num_outs: 5
 
-# rpn
-rpn_in_channels: 256
-rpn_feat_channels: 256
-rpn_loss_cls_weight: 1.0
-rpn_loss_reg_weight: 1.0
-rpn_cls_out_channels: 1
-rpn_target_means: [0., 0., 0., 0.]
-rpn_target_stds: [1.0, 1.0, 1.0, 1.0]
+# Segmentation (Proposal)
+binary_thresh: 0.5
+box_thresh: 0.7
+min_size: 0
+top_n_train: 1000
+top_n_test: 1000
+expand_rate: 0.4
+
 
 # bbox_assign_sampler
 neg_iou_thr: 0.3
