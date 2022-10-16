@@ -20,16 +20,7 @@ class WarmUpMultiStepsLR(LearningRateScheduler):
         self.max_iter = max_iter
         self.lr_pow = lr_pow
         self.last_epoch = last_epoch
-    
-    def linear_warmup_learning_rate(current_step, warmup_steps, base_lr, init_lr):
-        lr_inc = (float(base_lr) - float(init_lr)) / float(warmup_steps)
-        learning_rate = float(init_lr) + lr_inc * current_step
-        return learning_rate
-
-    def a_cosine_learning_rate(current_step, base_lr, warmup_steps, decay_steps):
-        base = float(current_step - warmup_steps) / float(decay_steps)
-        learning_rate = (1 + math.cos(base * math.pi)) / 2 * base_lr
-        return learning_rate
+        self.lrs = []
     
     def construct(self, config):
         warmup_factor = 1
@@ -42,14 +33,11 @@ class WarmUpMultiStepsLR(LearningRateScheduler):
                 warmup_factor = self.warmup_factor * (1 - alpha) + alpha
         if self.pow_schedule_mode:
             scale_running_lr = ((1. - float(self.last_epoch) / self.max_iter) ** self.lr_pow)
-            return [
-                base_lr * warmup_factor * scale_running_lr
-                for base_lr in self.base_lrs
-            ]
+            self.lrs.append(base_lr * warmup_factor * scale_running_lr)
         else:
-            return [
+            self.lrs.append(
             base_lr
             * warmup_factor
             * self.gamma ** bisect_right(self.milestones, self.last_epoch)
-            for base_lr in self.base_lrs
-        ]
+            )
+        return self.lrs

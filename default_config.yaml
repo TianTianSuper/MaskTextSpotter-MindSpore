@@ -120,7 +120,6 @@ num_gts: 128
 num_expected_neg: 256
 num_expected_pos: 128
 
-# proposal
-activate_num_classes: 2
-use_sigmoid_cls: True
+# LR
+base_lr: 0.02
 
