@@ -75,3 +75,6 @@ def train_masktextspotter():
 
     model = Model(net)
     model.train(config.epoch_size, dataset, callbacks=cbs, dataset_sink_mode=dataset_sink_mode_flag)
+
+if __name__ == '__main__':
+    train_masktextspotter()
