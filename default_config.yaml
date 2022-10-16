@@ -14,8 +14,16 @@ enable_profiling: False
 pre_trained: "/cache/data"
 coco_root: "/cache/data"
 ckpt_path: ""
-ann_file: ""
+
+# static
+below_low_threshold: -1
+between_thresholds: -2
+
 # ==============================================================================
+
+# dataset
+datasets_root: "./datasets"
+
 img_path: ''
 result_path: ''
 

@@ -266,7 +266,7 @@ class ROIMaskHead(nn.Cell):
 
             # this can probably be removed, but is left here for clarity
             # and completeness
-            neg_inds = matched_idxs == ElementsAssigner.below_low
+            neg_inds = matched_idxs == self.config.below_low_threshold
             labels_per_image[neg_inds] = 0
 
             # mask scores are only computed on positive samples
@@ -491,7 +491,7 @@ class ROIMaskHead(nn.Cell):
                             result = self.post_processor(
                                 mask_logits,
                                 None,
-                                proposals,z
+                                proposals,
                                 seq_outputs=seq_outputs,
                                 seq_scores=seq_scores,
                                 detailed_seq_scores=detailed_seq_scores,
