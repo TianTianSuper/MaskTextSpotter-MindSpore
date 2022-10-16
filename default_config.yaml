@@ -22,7 +22,7 @@ between_thresholds: -2
 # ==============================================================================
 
 # dataset
-datasets_root: "./datasets"
+datasets_root: "/home/tiantian/Documents/internship/MindSpore/OCR/MaskTextSpotterV3/datasets"
 datasets_name:
 - "icdar2013"
 - "icdar2015"
@@ -41,6 +41,8 @@ datasets_name:
 # scut-eng-char_train: ("scut-eng-char/train_images", "scut-eng-char/train_gts")
 
 mindrecord_dir: "./mindrecords"
+data_workers: 4
+batch_size: 2
 
 img_path: ''
 result_path: ''
