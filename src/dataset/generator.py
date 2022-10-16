@@ -236,6 +236,7 @@ class DatasetsManager:
         return datacomb
     
     def init_dataset(self):
+        self.init_mindrecords()
         return self.__init_dataset()
 
 

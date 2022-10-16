@@ -125,3 +125,13 @@ base_lr: 0.02
 warmup_factor: 0.1
 lr_steps: (100000, 160000)
 max_iter: 300000
+
+# train
+momentum: 0.91
+loss_scale: 1024
+weight_decay: 1e-4
+save_ckpt: True
+save_checkpoint_epochs: 1
+keep_checkpoint_max: 12
+save_checkpoint_path: "./ckpt"
+epoch_size: 12
