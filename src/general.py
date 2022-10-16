@@ -8,8 +8,10 @@ from roi.roi_combine import CombinedROIHeads
 from .model_utils.images import to_image_list
 
 class GeneralLoss(nn.Cell):
-    def construct(self, x1, x2, x3, x4, x5, x6, x7):
-        return x1 + x2
+    def construct(self, losses_dict):
+        losses = [v for v in losses_dict.values()]
+        total_loss = sum(losses)
+        return total_loss
 
 class MaskTextSpotter3(nn.Cell):
     """
