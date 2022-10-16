@@ -4,3 +4,4 @@ __pycache__/**
 .pytest_cache/**
 rank_0
 *tar.gz
+mindrecords

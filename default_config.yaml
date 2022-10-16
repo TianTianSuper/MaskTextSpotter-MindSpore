@@ -23,6 +23,24 @@ between_thresholds: -2
 
 # dataset
 datasets_root: "./datasets"
+datasets_name:
+- "icdar2013"
+- "icdar2015"
+# - "synthtext"
+# - "total_text"
+- "scut-eng-char"
+
+# icdar_2013_train: "icdar2013/train_images", "icdar2013/train_gts"
+# icdar_2013_test: "icdar2013/test_images", "icdar2013/test_gts"
+# icdar_2015_train: ("icdar2015/train_images", "icdar2015/train_gts")
+# icdar_2015_test: ("icdar2015/test_images", "icdar2015/test_gts")
+# synthtext_train: ("synthtext/train_images", "synthtext/train_gts")
+# synthtext_test: ("synthtext/test_images", "synthtext/test_gts")
+# total_text_train: ("total_text/train_images", "total_text/train_gts")
+# total_text_test: ("total_text/test_images", "total_text/test_gts")
+# scut-eng-char_train: ("scut-eng-char/train_images", "scut-eng-char/train_gts")
+
+mindrecord_dir: "./mindrecords"
 
 img_path: ''
 result_path: ''

@@ -38,6 +38,9 @@ class Config:
     def __repr__(self):
         return self.__str__()
 
+    def __getitem__(self, attr):
+        return getattr(self, attr)
+
 
 def parse_cli_to_yaml(parser, cfg, helper=None, choices=None, cfg_path="default_config.yaml"):
     """

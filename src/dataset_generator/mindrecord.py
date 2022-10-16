@@ -1,8 +1,11 @@
 import time
 import os
+import sys
+sys.path.append(os.getcwd())
 import numpy as np
 from numpy import random
 import cv2
+import logging
 
 from src.model_utils.config import config
 
@@ -15,56 +18,51 @@ from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train import Model
 from mindspore.context import ParallelMode
 
-def data_to_mindrecord_byte_image(dataset="coco", is_training=True, prefix="masktextspotter.mindrecord", file_num=8):
+def create_mindrecords(config, is_training=True, prefix="masktextspotter.mindrecord", file_num=8):
     """Create MindRecord file."""
+    datasets = config.datasets_name
     mindrecord_dir = config.mindrecord_dir
+    if not os.path.exists(mindrecord_dir):
+        os.mkdir(mindrecord_dir)
     mindrecord_path = os.path.join(mindrecord_dir, prefix)
 
     writer = FileWriter(mindrecord_path, file_num)
-    if dataset == "coco":
-        image_files, image_anno_dict, masks, masks_shape = create_coco_label(is_training)
-    else:
-        print("Error unsupported other dataset")
-        return
-
     info_json = {
         "image": {"type": "bytes"},
-        "annotation": {"type": "int32", "shape": [-1, 6]},
-        "mask": {"type": "bytes"},
-        "mask_shape": {"type": "int32", "shape": [-1]},
+        "ground_trues": {"type": "bytes"},
     }
     writer.add_schema(info_json, "info_json")
 
-    image_files_num = len(image_files)
-    for ind, image_name in enumerate(image_files):
-        with open(image_name, 'rb') as f:
-            img = f.read()
-        annos = np.array(image_anno_dict[image_name], dtype=np.int32)
-        mask = masks[image_name]
-        mask_shape = masks_shape[image_name]
-        row = {"image": img, "annotation": annos, "mask": mask, "mask_shape": mask_shape}
-        if (ind + 1) % 10 == 0:
-            print("writing {}/{} into mindrecord".format(ind + 1, image_files_num))
-        writer.write_raw_data([row])
+    for dataset in datasets:
+        if dataset not in ("icdar2013", "icdar2015", "synthtext", "total_text", "scut-eng-char"):
+            logging.warning(
+                "Dataset '{}' is not in recommended datasets list: \
+                'icdar2013', 'icdar2015', 'synthtext', 'total_text', 'scut-eng-char'.".format(dataset))
+        if is_training:
+            image_files_path = os.path.join(config.datasets_root, dataset+'/train_images')
+            gts_files_path = os.path.join(config.datasets_root, dataset+'/train_gts')
+        else:
+            image_files_path = os.path.join(config.datasets_root, dataset+'/test_images')
+            gts_files_path = os.path.join(config.datasets_root, dataset+'/test_gts')
+        image_files = os.listdir(image_files_path)
+
+        print("Transferring '{}':".format(dataset))
+        image_files_num = len(image_files)
+        for i, image_name in enumerate(image_files):
+            with open(os.path.join(image_files_path, image_name), 'rb') as f:
+                img = f.read()
+            if not os.path.exists(os.path.join(gts_files_path, image_name+'.txt')):
+                continue
+            with open(os.path.join(gts_files_path, image_name+'.txt'), 'rb') as f:
+                gts = f.read()
+            raw = {"image": img, "ground_trues": gts}
+            
+            if (i + 1) % 10 == 0:
+                print("writing {}/{} into mindrecord".format(i + 1, image_files_num))
+            writer.write_raw_data([raw])
+
     writer.commit()
 
 
-def create_mindrecord_dir(prefix, mindrecord_dir, mindrecord_file):
-    if not os.path.isdir(mindrecord_dir):
-        os.makedirs(mindrecord_dir)
-    if config.dataset == "coco":
-        if os.path.isdir(config.coco_root):
-            print("Create Mindrecord.")
-            data_to_mindrecord_byte_image("coco", True, prefix)
-            print("Create Mindrecord Done, at {}".format(mindrecord_dir))
-        else:
-            raise Exception("coco_root not exits.")
-    else:
-        if os.path.isdir(config.IMAGE_DIR) and os.path.exists(config.ANNO_PATH):
-            print("Create Mindrecord.")
-            data_to_mindrecord_byte_image("other", True, prefix)
-            print("Create Mindrecord Done, at {}".format(mindrecord_dir))
-        else:
-            raise Exception("IMAGE_DIR or ANNO_PATH not exits.")
-    while not os.path.exists(mindrecord_file+".db"):
-        time.sleep(5)
+if __name__ == '__main__':
+    create_mindrecords(config)
