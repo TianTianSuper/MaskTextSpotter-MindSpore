@@ -1,9 +1,9 @@
 import mindspore
 from mindspore import nn
 
-from masktextspotter.resnet50 import ResNetFea
-from masktextspotter.spn import SEG
-from roi.roi_combine import CombinedROIHeads
+from src.masktextspotter.resnet50 import ResNetFea
+from src.masktextspotter.spn import SEG
+from src.roi.roi_combine import CombinedROIHeads
 
 from .model_utils.images import to_image_list
 

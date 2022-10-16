@@ -64,7 +64,7 @@ class SeqCharMaskRCNNC4Predictor(nn.Cell):
                 detailed_decoded_scores,
             )
 
-class SequencePredictor(nn.Module):
+class SequencePredictor(nn.Cell):
     def __init__(self, config, dim_in):
         super(SequencePredictor, self).__init__()
         self.config = config
@@ -288,7 +288,7 @@ class SequencePredictor(nn.Module):
                 break
         return top_seqs
 
-class BahdanauAttnDecoderRNN(nn.Module):
+class BahdanauAttnDecoderRNN(nn.Cell):
     def __init__(
         self,
         hidden_size,
@@ -315,7 +315,7 @@ class BahdanauAttnDecoderRNN(nn.Module):
         self.rnn = nn.GRUCell(2 * hidden_size + onehot_size[0] + onehot_size[1], hidden_size)
         self.out = nn.Dense(hidden_size, output_size)
 
-    def forward(self, word_input, last_hidden, encoder_outputs):
+    def construct(self, word_input, last_hidden, encoder_outputs):
         """
         :param word_input:
             word input for current time step, in shape (B)
@@ -350,7 +350,7 @@ class BahdanauAttnDecoderRNN(nn.Module):
         # print(output.shape)
         return output, hidden, attn_weights
 
-class Attn(nn.Module):
+class Attn(nn.Cell):
     def __init__(self, method, hidden_size, embed_size, onehot_size):
         super(Attn, self).__init__()
         self.method = method

@@ -1,10 +1,10 @@
 import mindspore
 from mindspore import nn, ops, Tensor
 
-from feature_extractor import Fpn2Mlp
-from inference import PostHandler
-from predictor import FpnPredict
-from loss import FastRCNNLoss
+from .feature_extractor import Fpn2Mlp
+from .inference import PostHandler
+from .predictor import FpnPredict
+from .loss import FastRCNNLoss
 
 
 class ROIBoxHead(nn.Cell):

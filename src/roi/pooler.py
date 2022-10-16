@@ -7,7 +7,7 @@ from mindspore.ops import composite as C
 from mindspore.nn import layer as L
 from mindspore.common.tensor import Tensor
 
-from roi_align import ROIAlign
+from .roi_align import ROIAlign
 from ..model_utils.tools import SafeConcat
 
 class Level(nn.Cell):

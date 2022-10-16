@@ -4,15 +4,15 @@ from mindspore import nn, ops, Tensor, Parameter
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.common.initializer import HeNormal, Normal
-from feature_extractor import MaskRCNNFPNFeatureExtractor
-from model_utils.bounding_box import Boxes
-from predictor import SeqCharMaskRCNNC4Predictor
-from inference import CharMaskPostProcessor
-from loss import CharMaskRCNNLossComputation
-from ...model_utils.blocks import ConvBnReluBlock
+from .feature_extractor import MaskRCNNFPNFeatureExtractor
+from src.model_utils.bounding_box import Boxes
+from .predictor import SeqCharMaskRCNNC4Predictor
+from .inference import CharMaskPostProcessor
+from .loss import CharMaskRCNNLossComputation
+from src.model_utils.blocks import ConvBnReluBlock
 
-from ...model_utils.bbox_ops import boxlist_iou
-from ...model_utils.assigner import ElementsAssigner
+from src.model_utils.bbox_ops import boxlist_iou
+from src.model_utils.assigner import ElementsAssigner
 
 def project_char_masks_on_boxes(
     segmentation_masks, segmentation_char_masks, proposals, discretization_size
