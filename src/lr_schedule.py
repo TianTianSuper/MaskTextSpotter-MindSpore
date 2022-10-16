@@ -3,20 +3,20 @@ from bisect import bisect_right
 import math
 
 class WarmUpMultiStepsLR(LearningRateScheduler):
-    def __init__(self, config, gamma=0.1, warmup_factor=1.0/3, warmup_iters=500,
+    def __init__(self, config, gamma=0.1, warmup_iters=500,
                  warmup_method="linear", last_epoch=-1, pow_schedule_mode=False,
-                 max_iter=300000, lr_pow=0.9):
+                 lr_pow=0.9):
 
         self.gamma = gamma
-        self.warmup_factor = warmup_factor
+        self.milestone = config.lr_steps
+        self.warmup_factor = config.warmup_factor
         self.warmup_iters = warmup_iters
         self.warmup_method = warmup_method
         self.pow_schedule_mode = pow_schedule_mode
-        self.max_iter = max_iter
+        self.max_iter = config.max_iter
         self.lr_pow = lr_pow
         self.last_epoch = last_epoch
         self.base_lr = config.base_lr
-        self.lrs = []
         super(LearningRateScheduler, self).__init__(self.update)
     
     def update(self):
@@ -31,7 +31,6 @@ class WarmUpMultiStepsLR(LearningRateScheduler):
                 raise ValueError("Warmup method should be 'constant' or 'linear', got {}".format(self.warmup_factor))
         if self.pow_schedule_mode:
             scale_running_lr = ((1. - float(self.last_epoch) / self.max_iter) ** self.lr_pow)
-            self.lrs.append(self.base_lr * warmup_factor * scale_running_lr)
+            return self.base_lr * warmup_factor * scale_running_lr
         else:
-            self.lrs.append(self.base_lr * warmup_factor * self.gamma ** bisect_right(self.lrs, self.last_epoch))
-        return self.lrs[-1]
+            return self.base_lr * warmup_factor * self.gamma ** bisect_right(self.milestone, self.last_epoch)

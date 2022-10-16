@@ -122,4 +122,6 @@ num_expected_pos: 128
 
 # LR
 base_lr: 0.02
-
+warmup_factor: 0.1
+lr_steps: (100000, 160000)
+max_iter: 300000
