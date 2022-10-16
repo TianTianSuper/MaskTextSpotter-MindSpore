@@ -28,33 +28,18 @@ class SeqCharMaskRCNNC4Predictor(nn.Cell):
         super(SeqCharMaskRCNNC4Predictor, self).__init__()
         # num_classes = config.MODEL.ROI_BOX_HEAD.NUM_CLASSES
         num_classes = 1
-        char_num_classes = config.MODEL.ROI_MASK_HEAD.CHAR_NUM_CLASSES
-        dim_reduced = config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1]
+        char_num_classes = config.roi.mask_head.char_class_count
+        dim_reduced = config.roi.mask_head.conv_layers[-1]
 
-        if config.MODEL.ROI_HEADS.USE_FPN:
-            if config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'CAT':
-                num_inputs = dim_reduced + 1
-            elif config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'MIX' or 'ATTENTION_CHANNEL' in config.MODEL.ROI_MASK_HEAD.MIX_OPTION:
-                num_inputs = dim_reduced * 2
-            else:
-                num_inputs = dim_reduced
-        else:
-            stage_index = 4
-            stage2_relative_factor = 2 ** (stage_index - 1)
-            res2_out_channels = config.MODEL.RESNETS.RES2_OUT_CHANNELS
-            num_inputs = res2_out_channels * stage2_relative_factor
+        num_inputs = dim_reduced
         
         weight_init = HeNormal(mode="fan_out", nonlinearity="relu")
         bias_init = "zero"
 
         self.conv5_mask = nn.Conv2dTranspose(num_inputs, dim_reduced, 2, 2, 0, weight_init=weight_init, bias_init=bias_init)
-        if config.MODEL.CHAR_MASK_ON:
-            self.mask_fcn_logits = nn.Conv2d(dim_reduced, num_classes, 1, 1, 0, weight_init=weight_init, bias_init=bias_init)
-            self.char_mask_fcn_logits = nn.Conv2d(dim_reduced, char_num_classes, 1, 1, 0, weight_init=weight_init, bias_init=bias_init)
-            self.seq = SequencePredictor(config, dim_reduced)
-        else:
-            self.mask_fcn_logits = nn.Conv2d(dim_reduced, num_classes, 1, 1, 0, weight_init=weight_init, bias_init=bias_init)
-
+        self.mask_fcn_logits = nn.Conv2d(dim_reduced, num_classes, 1, 1, 0, weight_init=weight_init, bias_init=bias_init)
+        self.char_mask_fcn_logits = nn.Conv2d(dim_reduced, char_num_classes, 1, 1, 0, weight_init=weight_init, bias_init=bias_init)
+        self.seq = SequencePredictor(config, dim_reduced)
 
     def forward(self, x, decoder_targets=None, word_targets=None):
         x = nn.ReLU()(self.conv5_mask(x))
@@ -85,29 +70,21 @@ class SequencePredictor(nn.Module):
         self.config = config
         weight_init = HeNormal(mode="fan_out", nonlinearity="relu")
         bias_init = "zero"
-        if config.SEQUENCE.TWO_CONV:
-            self.seq_encoder = nn.CellList(
-                nn.Conv2d(dim_in, dim_in, 3, padding=1, weight_init=weight_init, bias_init=bias_init),
-                nn.ReLU(),
-                nn.MaxPool2d(2, stride=2, ceil_mode=True, weight_init=weight_init, bias_init=bias_init),
-                nn.Conv2d(dim_in, 256, 3, padding=1, weight_init=weight_init, bias_init=bias_init),
-                nn.ReLU(),
-            )
-        else:
-            self.seq_encoder = nn.CellList(
-                nn.Conv2d(dim_in, 256, 3, padding=1, weight_init=weight_init, bias_init=bias_init),
-                nn.ReLU(),
-                nn.MaxPool2d(2, stride=2, ceil_mode=True, weight_init=weight_init, bias_init=bias_init),
-            )
-        x_onehot_size = int(config.SEQUENCE.RESIZE_WIDTH / 2)
-        y_onehot_size = int(config.SEQUENCE.RESIZE_HEIGHT / 2)
+
+        self.seq_encoder = nn.CellList(
+            nn.Conv2d(dim_in, 256, 3, padding=1, weight_init=weight_init, bias_init=bias_init),
+            nn.ReLU(),
+            nn.MaxPool2d(2, stride=2, ceil_mode=True, weight_init=weight_init, bias_init=bias_init),
+        )
+        x_onehot_size = int(config.sequence.resize_w / 2)
+        y_onehot_size = int(config.sequence.resize_h / 2)
         self.seq_decoder = BahdanauAttnDecoderRNN(
-            256, config.SEQUENCE.NUM_CHAR, config.SEQUENCE.NUM_CHAR, n_layers=1, dropout_p=0.1, onehot_size = (y_onehot_size, x_onehot_size)
+            256, config.sequence.char_count, config.sequence.char_count, n_layers=1, dropout_p=0.1, onehot_size = (y_onehot_size, x_onehot_size)
         )
         # self.criterion_seq_decoder = nn.NLLLoss(ignore_index = -1, reduce=False)
         self.criterion_seq_decoder = nn.NLLLoss(ignore_index=-1, reduction="none")
         # self.rescale = nn.Upsample(size=(16, 64), mode="bilinear", align_corners=False)
-        self.rescale = nn.ResizeBilinear(size=(config.SEQUENCE.RESIZE_HEIGHT, config.SEQUENCE.RESIZE_WIDTH), mode="bilinear", align_corners=False)
+        self.rescale = nn.ResizeBilinear(size=(config.sequence.resize_h, config.sequence.resize_w), mode="bilinear", align_corners=False)
 
         self.x_onehot = nn.Embedding(x_onehot_size, x_onehot_size)
         self.x_onehot.weight.data = ops.eye(x_onehot_size)
@@ -120,8 +97,8 @@ class SequencePredictor(nn.Module):
     def construct(self, x, decoder_targets=None, word_targets=None, use_beam_search=False):
         rescale_out = self.rescale(x)
         seq_decoder_input = self.seq_encoder(rescale_out)
-        x_onehot_size = int(self.config.SEQUENCE.RESIZE_WIDTH / 2)
-        y_onehot_size = int(self.config.SEQUENCE.RESIZE_HEIGHT / 2)
+        x_onehot_size = int(self.config.sequence.resize_w / 2)
+        y_onehot_size = int(self.config.sequence.resize_h / 2)
         x_t, y_t = np.meshgrid(np.linspace(0, x_onehot_size - 1, x_onehot_size), np.linspace(0, y_onehot_size - 1, y_onehot_size))
         x_t = x_t.astype(mindspore.int64)
         y_t = x_t.astype(mindspore.int64)
@@ -149,12 +126,12 @@ class SequencePredictor(nn.Module):
             bos_onehot = np.zeros(
                 (seq_decoder_input_reshape.shape(1), 1), dtype=np.int32
             )
-            bos_onehot[:, 0] = self.config.SEQUENCE.BOS_TOKEN
+            bos_onehot[:, 0] = self.config.sequence.box_token
             decoder_input = Tensor(bos_onehot.tolist())
             decoder_hidden = np.zeros((seq_decoder_input_reshape.shape(1), 256))
             use_teacher_forcing = (
                 True
-                if random.random() < self.config.SEQUENCE.TEACHER_FORCE_RATIO
+                if random.random() < self.config.sequence.ratio
                 else False
             )
             target_length = decoder_targets.shape(1)
@@ -209,12 +186,12 @@ class SequencePredictor(nn.Module):
                         seq_decoder_input_reshape[:, batch_index : batch_index + 1, :],
                         decoder_hidden,
                         beam_size=6,
-                        max_len=self.config.SEQUENCE.MAX_LENGTH,
+                        max_len=self.config.sequence.max_len,
                     )
                     top_seq = top_seqs[0]
                     for character in top_seq[1:]:
                         character_index = character[0]
-                        if character_index == self.config.SEQUENCE.NUM_CHAR - 1:
+                        if character_index == self.config.sequence.char_count - 1:
                             char_scores.append(character[1])
                             detailed_char_scores.append(character[2])
                             break
@@ -232,12 +209,12 @@ class SequencePredictor(nn.Module):
             else:
                 for batch_index in range(seq_decoder_input_reshape.shape(1)):
                     bos_onehot = np.zeros((1, 1), dtype=np.int32)
-                    bos_onehot[:, 0] = self.config.SEQUENCE.BOS_TOKEN
+                    bos_onehot[:, 0] = self.config.sequence.bos_token
                     decoder_input = Tensor(bos_onehot.tolist())
                     decoder_hidden = np.zeros((1, 256))
                     word = []
                     char_scores = []
-                    for di in range(self.config.SEQUENCE.MAX_LENGTH):
+                    for di in range(self.config.sequence.max_len):
                         decoder_output, decoder_hidden, decoder_attention = self.seq_decoder(
                             decoder_input,
                             decoder_hidden,
@@ -248,7 +225,7 @@ class SequencePredictor(nn.Module):
                         # decoder_attentions[di] = decoder_attention.data
                         topv, topi = decoder_output.data.top_k(1)
                         char_scores.append(topv.item())
-                        if topi.item() == self.config.SEQUENCE.NUM_CHAR - 1:
+                        if topi.item() == self.config.sequence.char_count - 1:
                             break
                         else:
                             if topi.item() == 0:
@@ -266,7 +243,7 @@ class SequencePredictor(nn.Module):
         all_seqs = []
         for seq in top_seqs:
             seq_score = reduce_mul([_score for _, _score, _, _ in seq])
-            if seq[-1][0] == self.config.SEQUENCE.NUM_CHAR - 1:
+            if seq[-1][0] == self.config.sequence.char_count - 1:
                 all_seqs.append((seq, seq_score, seq[-1][2], True))
                 continue
             decoder_hidden = seq[-1][-1][0]
@@ -292,7 +269,7 @@ class SequencePredictor(nn.Module):
                         [decoder_hidden],
                     )
                 ]
-                done = character_index.item() + 1 == self.config.SEQUENCE.NUM_CHAR - 1
+                done = character_index.item() + 1 == self.config.sequence.char_count - 1
                 all_seqs.append((rs_seq, score, char_score, done))
         all_seqs = sorted(all_seqs, key=lambda seq: seq[1], reverse=True)
         topk_seqs = [seq for seq, _, _, _ in all_seqs[:k]]
@@ -300,8 +277,8 @@ class SequencePredictor(nn.Module):
         return topk_seqs, all_done
 
     def beam_search(self, encoder_context, decoder_hidden, beam_size=6, max_len=32):
-        char_score = np.zeros(self.config.SEQUENCE.NUM_CHAR)
-        top_seqs = [[(self.config.SEQUENCE.BOS_TOKEN, 1.0, char_score, [decoder_hidden])]]
+        char_score = np.zeros(self.config.sequence.char_count)
+        top_seqs = [[(self.config.sequence.bos_token, 1.0, char_score, [decoder_hidden])]]
         # loop
         for _ in range(max_len):
             top_seqs, all_done = self.beam_search_step(

@@ -18,23 +18,20 @@ class MaskRCNNFPNFeatureExtractor(nn.Cell):
         super(MaskRCNNFPNFeatureExtractor, self).__init__()
 
         # resolution = config.MODEL.ROI_MASK_HEAD.POOLER_RESOLUTION
-        if config.MODEL.CHAR_MASK_ON or config.SEQUENCE.SEQ_ON:
-            resolution_h = config.MODEL.ROI_MASK_HEAD.POOLER_RESOLUTION_H
-            resolution_w = config.MODEL.ROI_MASK_HEAD.POOLER_RESOLUTION_W
-        else:
-            resolution_h = config.MODEL.ROI_MASK_HEAD.POOLER_RESOLUTION
-            resolution_w = config.MODEL.ROI_MASK_HEAD.POOLER_RESOLUTION
-        scales = config.MODEL.ROI_MASK_HEAD.POOLER_SCALES
-        sampling_ratio = config.MODEL.ROI_MASK_HEAD.POOLER_SAMPLING_RATIO
+        resolution_h = config.roi.mask_head.resolution_h
+        resolution_w = config.roi.mask_head.resolution_w
+
+        scales = config.roi.mask_head.scales
+        sampling_rate = config.roi.sample_rate
         pooler = Pooler(
             output_size=(resolution_h, resolution_w),
             scales=scales,
-            sampling_ratio=sampling_ratio,
+            sampling_ratio=sampling_rate,
         )
-        input_size = config.MODEL.BACKBONE.OUT_CHANNELS
+        input_size = config.resnet_out_channels[-1]
         self.pooler = pooler
 
-        layers = config.MODEL.ROI_MASK_HEAD.CONV_LAYERS
+        layers = config.roi.mask_head.conv_layers
 
         next_feature = input_size
         self.blocks = []

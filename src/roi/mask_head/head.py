@@ -111,101 +111,101 @@ class ROIMaskHead(nn.Cell):
         super(ROIMaskHead, self).__init__()
         self.proposal_matcher = proposal_matcher
         self.discretization_size = discretization_size
-        self.config = config.clone()
+        self.config = config
         self.feature_extractor = MaskRCNNFPNFeatureExtractor(config)
         self.predictor = SeqCharMaskRCNNC4Predictor(config)
         self.post_processor = CharMaskPostProcessor(config)
         self.loss_evaluator = CharMaskRCNNLossComputation(config)
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION':
-            self.mask_attention = nn.CellList(
-                ConvBnReluBlock(config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1] + 1, 32, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
-                nn.Conv2d(32, 1, kernel_size=3, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
-                # Conv2d(config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1] + 1, 1, 1, 1, 0),
-                nn.Sigmoid()
-            )
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION':
+        #     self.mask_attention = nn.CellList(
+        #         ConvBnReluBlock(config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1] + 1, 32, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
+        #         nn.Conv2d(32, 1, kernel_size=3, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
+        #         # Conv2d(config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1] + 1, 1, 1, 1, 0),
+        #         nn.Sigmoid()
+        #     )
 
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_DOWN':
-            self.mask_attention = nn.Sequential(
-                ConvBnReluBlock(config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1] + 1, 32, stride=2, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
-                nn.Conv2d(32, 1, kernel_size=3, stride=2, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
-                nn.ResizeBilinear(), ##scale_factor=4
-                nn.Sigmoid()
-            )
-            self.mask_attention.apply(self.weights_init)
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_DOWN':
+        #     self.mask_attention = nn.Sequential(
+        #         ConvBnReluBlock(config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1] + 1, 32, stride=2, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
+        #         nn.Conv2d(32, 1, kernel_size=3, stride=2, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
+        #         nn.ResizeBilinear(), ##scale_factor=4
+        #         nn.Sigmoid()
+        #     )
+        #     self.mask_attention.apply(self.weights_init)
 
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL':
-            num_channel = config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1] * 2
-            self.channel_attention = nn.Sequential(
-                nn.MaxPool2d(2),
-                ConvBnReluBlock(num_channel, num_channel, stride=2, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
-                nn.Conv2d(num_channel, num_channel, kernel_size=3, stride=2, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
-                nn.AdaptiveAvgPool2d((1,1)),
-                nn.Sigmoid()
-            )
-            self.channel_attention.apply(self.weights_init)
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_SPLIT' or self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_SPLIT_BINARY':
-            num_channel = config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1] * 2
-            self.channel_attention = nn.Sequential(
-                nn.MaxPool2d(2),
-                ConvBnReluBlock(num_channel, int(num_channel / 4), stride=2, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
-                nn.Conv2d(int(num_channel / 4), 2, stride=2, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
-                nn.AdaptiveAvgPool2d((1,1)),
-                # nn.Sigmoid()
-                nn.Softmax(dim=1)
-            )
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_2':
-            num_channel = config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1] * 2
-            self.channel_attention_2 = nn.Sequential(
-                nn.AdaptiveAvgPool2d((1,1)),
-                nn.Conv2d(
-                    num_channel, num_channel, kernel_size=1, stride=1, padding=0, has_bias=True, weight_init=HeNormal(), bias_init='zeros'
-                ),
-                nn.Conv2d(
-                    num_channel, num_channel, kernel_size=1, stride=1, padding=0, has_bias=True, weight_init=HeNormal(), bias_init='zeros'
-                ),
-                nn.Softmax(axis=1)
-            )
-            self.channel_attention_2.apply(self.weights_init)
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_TANH':
-            feature_dim = 128
-            num_channel = config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1] * 2
-            self.mask_pooler = nn.Sequential(
-                nn.MaxPool2d(2),
-                ConvBnReluBlock(num_channel, num_channel, stride=2, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
-            )
-            self.attn = nn.Dense(feature_dim, feature_dim, has_bias=True, weight_init=HeNormal(), bias_init='zeros')
-            stdv = 1.0 / np.sqrt(self.v.shape(0))
-            self.v = Parameter(Tensor(feature_dim, init=Normal(stdv)))
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL':
+        #     num_channel = config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1] * 2
+        #     self.channel_attention = nn.Sequential(
+        #         nn.MaxPool2d(2),
+        #         ConvBnReluBlock(num_channel, num_channel, stride=2, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
+        #         nn.Conv2d(num_channel, num_channel, kernel_size=3, stride=2, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
+        #         nn.AdaptiveAvgPool2d((1,1)),
+        #         nn.Sigmoid()
+        #     )
+        #     self.channel_attention.apply(self.weights_init)
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_SPLIT' or self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_SPLIT_BINARY':
+        #     num_channel = config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1] * 2
+        #     self.channel_attention = nn.Sequential(
+        #         nn.MaxPool2d(2),
+        #         ConvBnReluBlock(num_channel, int(num_channel / 4), stride=2, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
+        #         nn.Conv2d(int(num_channel / 4), 2, stride=2, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
+        #         nn.AdaptiveAvgPool2d((1,1)),
+        #         # nn.Sigmoid()
+        #         nn.Softmax(dim=1)
+        #     )
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_2':
+        #     num_channel = config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1] * 2
+        #     self.channel_attention_2 = nn.Sequential(
+        #         nn.AdaptiveAvgPool2d((1,1)),
+        #         nn.Conv2d(
+        #             num_channel, num_channel, kernel_size=1, stride=1, padding=0, has_bias=True, weight_init=HeNormal(), bias_init='zeros'
+        #         ),
+        #         nn.Conv2d(
+        #             num_channel, num_channel, kernel_size=1, stride=1, padding=0, has_bias=True, weight_init=HeNormal(), bias_init='zeros'
+        #         ),
+        #         nn.Softmax(axis=1)
+        #     )
+        #     self.channel_attention_2.apply(self.weights_init)
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_TANH':
+        #     feature_dim = 128
+        #     num_channel = config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1] * 2
+        #     self.mask_pooler = nn.Sequential(
+        #         nn.MaxPool2d(2),
+        #         ConvBnReluBlock(num_channel, num_channel, stride=2, has_bias=True, weight_init=HeNormal(), bias_init='zeros'),
+        #     )
+        #     self.attn = nn.Dense(feature_dim, feature_dim, has_bias=True, weight_init=HeNormal(), bias_init='zeros')
+        #     stdv = 1.0 / np.sqrt(self.v.shape(0))
+        #     self.v = Parameter(Tensor(feature_dim, init=Normal(stdv)))
 
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'NEW_CAT':
-            num_channel = config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1]
-            self.enlarge_recepitve_field = nn.Sequential(
-                nn.Conv2d(
-                    2 * num_channel, num_channel, kernel_size=3, stride=1, padding=2, dilation=2,
-                    has_bias=True, weight_init=HeNormal(), bias_init='zeros'
-                ),
-                nn.Conv2d(
-                    num_channel, num_channel, kernel_size=3, stride=1, padding=2, dilation=2,
-                    has_bias=True, weight_init=HeNormal(), bias_init='zeros'
-                ),
-            )
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'NEW_MASK':
-            num_channel = config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1]
-            self.new_mask = nn.Sequential(
-                nn.Conv2d(
-                    2 * num_channel, num_channel, kernel_size=3, stride=1, padding=2, dilation=2,
-                    has_bias=True, weight_init=HeNormal(), bias_init='zeros'
-                ),
-                nn.Conv2d(
-                    num_channel, 32, kernel_size=3, stride=1, padding=2, dilation=2,
-                    has_bias=True, weight_init=HeNormal(), bias_init='zeros'
-                ),
-                nn.Conv2d(
-                    32, 1, kernel_size=3, stride=1, padding=2, dilation=2,
-                    has_bias=True, weight_init=HeNormal(), bias_init='zeros'
-                ),
-                nn.Sigmoid()
-            )
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'NEW_CAT':
+        #     num_channel = config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1]
+        #     self.enlarge_recepitve_field = nn.Sequential(
+        #         nn.Conv2d(
+        #             2 * num_channel, num_channel, kernel_size=3, stride=1, padding=2, dilation=2,
+        #             has_bias=True, weight_init=HeNormal(), bias_init='zeros'
+        #         ),
+        #         nn.Conv2d(
+        #             num_channel, num_channel, kernel_size=3, stride=1, padding=2, dilation=2,
+        #             has_bias=True, weight_init=HeNormal(), bias_init='zeros'
+        #         ),
+        #     )
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'NEW_MASK':
+        #     num_channel = config.MODEL.ROI_MASK_HEAD.CONV_LAYERS[-1]
+        #     self.new_mask = nn.Sequential(
+        #         nn.Conv2d(
+        #             2 * num_channel, num_channel, kernel_size=3, stride=1, padding=2, dilation=2,
+        #             has_bias=True, weight_init=HeNormal(), bias_init='zeros'
+        #         ),
+        #         nn.Conv2d(
+        #             num_channel, 32, kernel_size=3, stride=1, padding=2, dilation=2,
+        #             has_bias=True, weight_init=HeNormal(), bias_init='zeros'
+        #         ),
+        #         nn.Conv2d(
+        #             32, 1, kernel_size=3, stride=1, padding=2, dilation=2,
+        #             has_bias=True, weight_init=HeNormal(), bias_init='zeros'
+        #         ),
+        #         nn.Sigmoid()
+        #     )
         
         self.concat_2 = P.Concat(2)
         self.concat_1 = P.Concat(1)
@@ -302,74 +302,74 @@ class ROIMaskHead(nn.Cell):
             boxes = proposal.bbox
             for segmentation_mask, box in zip(segmentation_masks, boxes):
                 cropped_mask = segmentation_mask.crop(box)
-                scaled_mask = cropped_mask.resize((self.config.MODEL.ROI_MASK_HEAD.POOLER_RESOLUTION_W, self.config.MODEL.ROI_MASK_HEAD.POOLER_RESOLUTION_H))
+                scaled_mask = cropped_mask.resize((self.config.roi.mask_head.resolution_w, self.config.roi.mask_head.resolution_h))
                 mask = scaled_mask.convert(mode="mask")
                 masks.append(mask)
         if len(masks) == 0:
-            if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'CAT':
-                x = self.concat_1([x, np.ones((x.shape[0], 1, x.shape[2], x.shape[3]))])
-            if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'MIX' or 'ATTENTION_CHANNEL' in self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION:
-                x = self.concat_1([x, x])
+            # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'CAT':
+            #     x = self.concat_1([x, np.ones((x.shape[0], 1, x.shape[2], x.shape[3]))])
+            # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'MIX' or 'ATTENTION_CHANNEL' in self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION:
+            #     x = self.concat_1([x, x])
             return x
         masks = ops.stack(masks, dim=0).astype(mindspore.float32)
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'CAT':
-            x = self.concat_1([x, masks.unsqueeze(1)])
-            return x
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'NEW_CAT':
-            cat_x = self.concat_1([x, x * masks.unsqueeze(1)])
-            out_x = self.enlarge_recepitve_field(cat_x)
-            return out_x
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'NEW_MASK':
-            cat_x = self.concat_1([x, x * masks.unsqueeze(1)])
-            new_mask = self.new_mask(cat_x)
-            out_x = x * new_mask
-            return out_x
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION' or self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_DOWN':
-            x_cat = self.concat_1([x, masks.unsqueeze(1)])
-            attention = self.mask_attention(x_cat)
-            x = x * attention
-            return x
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'MIX':
-            mask_x = x * masks.unsqueeze(1)
-            cat_x = self.concat_1([x, mask_x])
-            return cat_x
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL':
-            mask_x = x * masks.unsqueeze(1)
-            cat_x = self.concat_1([x, mask_x])
-            channel_attention = self.channel_attention(cat_x)
-            attentioned_x = cat_x * channel_attention
-            return attentioned_x
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_2':
-            mask_x = x * masks.unsqueeze(1)
-            cat_x = self.concat_1([x, mask_x])
-            channel_attention = self.channel_attention_2(cat_x)
-            # print(channel_attention[0, :, 0, 0])
-            attentioned_x = cat_x * channel_attention
-            return attentioned_x
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_SPLIT':
-            mask_x = x * masks.unsqueeze(1)
-            cat_x = self.concat_1([x, mask_x])
-            channel_attention = self.channel_attention(cat_x)
-            print(channel_attention[0, :, 0, 0])
-            attentioned_x = self.concat_1([x * channel_attention[:, 0:1, :, :], mask_x * channel_attention[:, 1:, :, :]])
-            return attentioned_x
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_SPLIT_BINARY':
-            mask_x = x * masks.unsqueeze(1)
-            cat_x = self.concat_1([x, mask_x])
-            channel_attention = self.step_function(self.channel_attention(cat_x))
-            # print(channel_attention[:, :, 0, 0])
-            attentioned_x = self.concat_1([x * channel_attention[:, 0:1, :, :], mask_x * channel_attention[:, 1:, :, :]])
-            # attentioned_x = cat([x * channel_attention[:, 1:, :, :], mask_x * channel_attention[:, 0:1, :, :]], dim=1)
-            return attentioned_x
-        if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_TANH':
-            mask_x = x * masks.unsqueeze(1)
-            cat_x = self.concat_1([x, mask_x])
-            pooler_x = self.mask_pooler(cat_x)
-            pooler_mask = ops.interpolate(masks.unsqueeze(1), scale_factor=0.25, mode='bilinear')
-            channel_attention = self.channel_attention_tanh(pooler_x, pooler_mask)
-            attentioned_x = cat_x * channel_attention
-            return attentioned_x
-        soft_ratio = self.config.MODEL.ROI_MASK_HEAD.SOFT_MASKED_FEATURE_RATIO
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'CAT':
+        #     x = self.concat_1([x, masks.unsqueeze(1)])
+        #     return x
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'NEW_CAT':
+        #     cat_x = self.concat_1([x, x * masks.unsqueeze(1)])
+        #     out_x = self.enlarge_recepitve_field(cat_x)
+        #     return out_x
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'NEW_MASK':
+        #     cat_x = self.concat_1([x, x * masks.unsqueeze(1)])
+        #     new_mask = self.new_mask(cat_x)
+        #     out_x = x * new_mask
+        #     return out_x
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION' or self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_DOWN':
+        #     x_cat = self.concat_1([x, masks.unsqueeze(1)])
+        #     attention = self.mask_attention(x_cat)
+        #     x = x * attention
+        #     return x
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'MIX':
+        #     mask_x = x * masks.unsqueeze(1)
+        #     cat_x = self.concat_1([x, mask_x])
+        #     return cat_x
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL':
+        #     mask_x = x * masks.unsqueeze(1)
+        #     cat_x = self.concat_1([x, mask_x])
+        #     channel_attention = self.channel_attention(cat_x)
+        #     attentioned_x = cat_x * channel_attention
+        #     return attentioned_x
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_2':
+        #     mask_x = x * masks.unsqueeze(1)
+        #     cat_x = self.concat_1([x, mask_x])
+        #     channel_attention = self.channel_attention_2(cat_x)
+        #     # print(channel_attention[0, :, 0, 0])
+        #     attentioned_x = cat_x * channel_attention
+        #     return attentioned_x
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_SPLIT':
+        #     mask_x = x * masks.unsqueeze(1)
+        #     cat_x = self.concat_1([x, mask_x])
+        #     channel_attention = self.channel_attention(cat_x)
+        #     print(channel_attention[0, :, 0, 0])
+        #     attentioned_x = self.concat_1([x * channel_attention[:, 0:1, :, :], mask_x * channel_attention[:, 1:, :, :]])
+        #     return attentioned_x
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_SPLIT_BINARY':
+        #     mask_x = x * masks.unsqueeze(1)
+        #     cat_x = self.concat_1([x, mask_x])
+        #     channel_attention = self.step_function(self.channel_attention(cat_x))
+        #     # print(channel_attention[:, :, 0, 0])
+        #     attentioned_x = self.concat_1([x * channel_attention[:, 0:1, :, :], mask_x * channel_attention[:, 1:, :, :]])
+        #     # attentioned_x = cat([x * channel_attention[:, 1:, :, :], mask_x * channel_attention[:, 0:1, :, :]], dim=1)
+        #     return attentioned_x
+        # if self.config.MODEL.ROI_MASK_HEAD.MIX_OPTION == 'ATTENTION_CHANNEL_TANH':
+        #     mask_x = x * masks.unsqueeze(1)
+        #     cat_x = self.concat_1([x, mask_x])
+        #     pooler_x = self.mask_pooler(cat_x)
+        #     pooler_mask = ops.interpolate(masks.unsqueeze(1), scale_factor=0.25, mode='bilinear')
+        #     channel_attention = self.channel_attention_tanh(pooler_x, pooler_mask)
+        #     attentioned_x = cat_x * channel_attention
+        #     return attentioned_x
+        soft_ratio = self.config.roi.mask_head.soft_mask_feat_rate
         if soft_ratio > 0:
             if soft_ratio < 1.0:
                 x = x * (soft_ratio + (1 - soft_ratio) * masks.unsqueeze(1))
@@ -398,17 +398,13 @@ class ROIMaskHead(nn.Cell):
             # during training, only focus on positive boxes
             all_proposals = proposals
             proposals, positive_inds = keep_only_positive_boxes(
-                proposals, self.config.MODEL.ROI_MASK_HEAD.MASK_BATCH_SIZE_PER_IM
+                proposals, self.config.roi.mask_head.batch_size
             )
             if all(len(proposal) == 0 for proposal in proposals):
                 return None, None, None
-        if self.training and self.config.MODEL.ROI_MASK_HEAD.SHARE_BOX_FEATURE_EXTRACTOR:
-            x = features
-            x = x[self.concat_0(positive_inds)]
-        else:
-            x = self.feature_extractor(features, proposals)
-            if self.config.MODEL.ROI_MASK_HEAD.USE_MASKED_FEATURE:
-                x = self.feature_mask(x, proposals)
+
+        x = self.feature_extractor(features, proposals)
+        x = self.feature_mask(x, proposals)
         if self.training:
             mask_targets, char_mask_targets, char_mask_weights, \
                 decoder_targets, word_targets = self.prepare_targets(
@@ -424,127 +420,39 @@ class ROIMaskHead(nn.Cell):
         #         targets_not.append(proposal_target[1])
         # proposals = proposals_not_empty
         # targets = targets_not
-        if self.config.MODEL.CHAR_MASK_ON:
-            if self.config.SEQUENCE.SEQ_ON:
-                if not self.training:
-                    if x.numel() > 0:
-                        mask_logits, char_mask_logits, seq_outputs, seq_scores, \
-                            detailed_seq_scores = self.predictor(x)
-                        result = self.post_processor(
-                            mask_logits,
-                            char_mask_logits,
-                            proposals,
-                            seq_outputs=seq_outputs,
-                            seq_scores=seq_scores,
-                            detailed_seq_scores=detailed_seq_scores,
-                        )
-                        return x, result, {}
-                    else:
-                        return None, None, {}
-                mask_logits, char_mask_logits, seq_outputs = self.predictor(
-                    x, decoder_targets=decoder_targets, word_targets=word_targets
-                )
-                loss_mask, loss_char_mask = self.loss_evaluator(
-                    proposals,
+
+        if not self.training:
+            if x.numel() > 0:
+                mask_logits, char_mask_logits, seq_outputs, seq_scores, \
+                    detailed_seq_scores = self.predictor(x)
+                result = self.post_processor(
                     mask_logits,
                     char_mask_logits,
-                    mask_targets,
-                    char_mask_targets,
-                    char_mask_weights,
-                )
-                return (
-                    x,
-                    all_proposals,
-                    dict(
-                        loss_mask=loss_mask,
-                        loss_char_mask=loss_char_mask,
-                        loss_seq=seq_outputs,
-                    ),
-                )
-            else:
-                mask_logits, char_mask_logits = self.predictor(x)
-                if not self.training:
-                    result = self.post_processor(
-                        mask_logits, char_mask_logits, proposals
-                    )
-                    return x, result, {}
-                loss_mask, loss_char_mask = self.loss_evaluator(
                     proposals,
-                    mask_logits,
-                    char_mask_logits,
-                    mask_targets,
-                    char_mask_targets,
-                    char_mask_weights,
+                    seq_outputs=seq_outputs,
+                    seq_scores=seq_scores,
+                    detailed_seq_scores=detailed_seq_scores,
                 )
-                return (
-                    x,
-                    all_proposals,
-                    dict(loss_mask=loss_mask, loss_char_mask=loss_char_mask),
-                )
-        else:
-            if self.config.SEQUENCE.SEQ_ON:
-                if self.config.MODEL.MASK_ON:
-                    if not self.training:
-                        if x.size() > 0:
-                            mask_logits, seq_outputs, seq_scores, \
-                                detailed_seq_scores = self.predictor(x)
-                            result = self.post_processor(
-                                mask_logits,
-                                None,
-                                proposals,
-                                seq_outputs=seq_outputs,
-                                seq_scores=seq_scores,
-                                detailed_seq_scores=detailed_seq_scores,
-                            )
-                            return x, result, {}
-                        else:
-                            return None, None, {}
-                    mask_logits, seq_outputs = self.predictor(
-                        x, decoder_targets=decoder_targets, word_targets=word_targets
-                    )
-                    loss_mask = self.loss_evaluator(
-                        proposals,
-                        mask_logits,
-                        mask_targets,
-                    )
-                    return (
-                        x,
-                        all_proposals,
-                        dict(
-                            loss_mask=loss_mask,
-                            loss_seq=seq_outputs,
-                        ),
-                    )
-                else:
-                    if not self.training:
-                        if x.numel() > 0:
-                            _, seq_outputs, seq_scores, \
-                                detailed_seq_scores = self.predictor(x)
-                            result = self.post_processor(
-                                None,
-                                None,
-                                proposals,
-                                seq_outputs=seq_outputs,
-                                seq_scores=seq_scores,
-                                detailed_seq_scores=detailed_seq_scores,
-                            )
-                            return x, result, {}
-                        else:
-                            return None, None, {}
-                    _, seq_outputs = self.predictor(
-                        x, decoder_targets=decoder_targets, word_targets=word_targets
-                    )
-                    return (
-                        x,
-                        all_proposals,
-                        dict(
-                            loss_seq=seq_outputs,
-                        ),
-                    )
+                return x, result, {}
             else:
-                mask_logits = self.predictor(x)
-                if not self.training:
-                    result = self.post_processor(mask_logits, proposals)
-                    return x, result, {}
-                loss_mask = self.loss_evaluator(proposals, mask_logits, targets)
-                return x, all_proposals, dict(loss_mask=loss_mask)
+                return None, None, {}
+        mask_logits, char_mask_logits, seq_outputs = self.predictor(
+            x, decoder_targets=decoder_targets, word_targets=word_targets
+        )
+        loss_mask, loss_char_mask = self.loss_evaluator(
+            proposals,
+            mask_logits,
+            char_mask_logits,
+            mask_targets,
+            char_mask_targets,
+            char_mask_weights,
+        )
+        return (
+            x,
+            all_proposals,
+            dict(
+                loss_mask=loss_mask,
+                loss_char_mask=loss_char_mask,
+                loss_seq=seq_outputs,
+            ),
+        )

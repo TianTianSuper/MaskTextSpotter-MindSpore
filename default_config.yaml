@@ -91,6 +91,25 @@ roi:
     mlp_dim: 1024
     soft_mask_feat_rate: 0
     class_count: 2
+  mask_head:
+    resolution_h: 32
+    resolution_w: 32
+    scales: (0.25,)
+    sample_rate: 2
+    conv_layers: (256, 256, 256, 256)
+    soft_mask_feat_rate: 0
+    batch_size: 64
+    char_class_count: 37
+
+
+# seq
+sequence:
+  resize_w: 64
+  resize_h: 16
+  char_count: 38
+  bos_token: 0
+  ratio: 0
+  max_len: 38
 
 # bbox_assign_sampler
 neg_iou_thr: 0.3
