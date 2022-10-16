@@ -10,11 +10,11 @@ class FpnPredict(nn.Cell):
     def __init__(self, config):
         super(FpnPredict, self).__init__()
         self.config = config
-        class_count = config.MODEL.ROI_BOX_HEAD.NUM_CLASSES
-        representation_size = config.MODEL.ROI_BOX_HEAD.MLP_HEAD_DIM
+        class_count = config.roi.box_head.class_count
+        representation_size = config.roi.box_head.mlp_dim
 
         self.compute_layer = nn.Dense(representation_size, class_count)
-        self.use_reg = config.MODEL.ROI_BOX_HEAD.USE_REGRESSION
+        self.use_reg = True
         if self.use_reg:
             self.pred_layer = nn.Dense(representation_size, class_count * 4, weight_init=Normal(1e-3))
     

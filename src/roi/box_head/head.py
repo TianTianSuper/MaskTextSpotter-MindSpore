@@ -48,25 +48,14 @@ class ROIBoxHead(nn.Cell):
         class_logits, box_regression = self.predictor(x)
 
         if not self.training:
-            if self.config.MODEL.ROI_BOX_HEAD.INFERENCE_USE_BOX:
-                result = self.post_processor((class_logits, box_regression), proposals)
-                # print(result[0].get_field('masks'))
-                return x, result, {}
-            else:
-                return x, proposals, {}
+            result = self.post_processor((class_logits, box_regression), proposals)
+            return x, result, {}
 
         loss_classifier, loss_box_reg = self.loss_evaluator(
             [class_logits], [box_regression]
         )
-        if self.config.MODEL.ROI_BOX_HEAD.USE_REGRESSION:
-            return (
-                x,
-                proposals,
-                dict(loss_classifier=loss_classifier, loss_box_reg=loss_box_reg),
-            )
-        else:
-            return (
-                x,
-                proposals,
-                dict(loss_classifier=loss_classifier),
-            )
+        return (
+            x,
+            proposals,
+            dict(loss_classifier=loss_classifier, loss_box_reg=loss_box_reg),
+        )

@@ -1,9 +1,9 @@
 import mindspore
 from mindspore import nn
 
-from backbone.resnet50 import ResNetFea
-from src.segmentation.segmentation import SEG
-from src.roi.roi_combine import CombinedROIHeads
+from masktextspotter.resnet50 import ResNetFea
+from masktextspotter.spn import SEG
+from roi.roi_combine import CombinedROIHeads
 
 from .model_utils.images import to_image_list
 
@@ -43,40 +43,11 @@ class MaskTextSpotter3(nn.Cell):
         """
         if self.training and targets is None:
             raise ValueError("In training mode, targets should be passed")
-        # torch.cuda.synchronize()
-        # start_time = time.time()
+
         images = to_image_list(images)
-        # torch.cuda.synchronize()
-        # end_time = time.time()
-        # print('image load time:', end_time - start_time)
-        # torch.cuda.synchronize()
-        # start_time = time.time()
         features = self.backbone(images.tensors)
-        # torch.cuda.synchronize()
-        # end_time = time.time()
-        # print('backbone time:', end_time - start_time)
-        if self.config.MODEL.SEG_ON and not self.training:
-            # torch.cuda.synchronize()
-            # start_time = time.time()
-            (proposals, seg_results), fuse_feature = self.proposal(images, features, targets)
-            # torch.cuda.synchronize()
-            # end_time = time.time()
-            # print('seg time:', end_time - start_time)
-        else:
-            if self.config.MODEL.SEG_ON:
-                (proposals, proposal_losses), fuse_feature = self.proposal(images, features, targets)
-            else:
-                proposals, proposal_losses = self.proposal(images, features, targets)
-        if self.roi_heads is not None:
-            if self.config.MODEL.SEG_ON and self.config.MODEL.SEG.USE_FUSE_FEATURE:
-                x, result, detector_losses = self.roi_heads(fuse_feature, proposals, targets)
-            else:
-                x, result, detector_losses = self.roi_heads(features, proposals, targets)
-        else:
-            # RPN-only models don't have roi_heads
-            # x = features
-            result = proposals
-            detector_losses = {}
+        (proposals, proposal_losses), fuse_feature = self.proposal(images, features, targets)
+        x, result, detector_losses = self.roi_heads(fuse_feature, proposals, targets)
 
         if self.training:
             losses = {}
@@ -84,10 +55,3 @@ class MaskTextSpotter3(nn.Cell):
                 losses.update(detector_losses)
             losses.update(proposal_losses)
             return losses
-        else:
-            if self.config.MODEL.SEG_ON:
-                return result, proposals, seg_results
-            else:
-                return result
-
-        # return result

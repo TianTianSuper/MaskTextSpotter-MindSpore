@@ -107,9 +107,7 @@ class FastRCNNLoss(nn.Cell):
     def construct(self, class_logits, box_regression):
 
         class_logits = self.concat(class_logits)
-        if self.config.MODEL.ROI_BOX_HEAD.USE_REGRESSION:
-            box_regression = self.concat(box_regression)
-        device = class_logits.device
+        box_regression = self.concat(box_regression)
 
         if not hasattr(self, "_proposals"):
             raise RuntimeError("subsample needs to be called before")
@@ -117,25 +115,22 @@ class FastRCNNLoss(nn.Cell):
         proposals = self._proposals
 
         labels = self.concat([proposal.get_field("labels") for proposal in proposals])
-        if self.config.MODEL.ROI_BOX_HEAD.USE_REGRESSION:
-            regression_targets = self.concat([proposal.get_field("regression_targets") for proposal in proposals])
+        regression_targets = self.concat([proposal.get_field("regression_targets") for proposal in proposals])
 
         classification_loss = self.cross_entropy(class_logits, labels)
 
-        if self.config.MODEL.ROI_BOX_HEAD.USE_REGRESSION:
-            # get indices that correspond to the regression targets for
-            # the corresponding ground truth labels, to be used with
-            # advanced indexing
-            sampled_pos_inds_subset = ops.nonzero(labels > 0).squeeze(1)
-            labels_pos = labels[sampled_pos_inds_subset]
-            map_inds = 4 * labels_pos[:, None] + Tensor([0, 1, 2, 3])
+        # get indices that correspond to the regression targets for
+        # the corresponding ground truth labels, to be used with
+        # advanced indexing
+        sampled_pos_inds_subset = ops.nonzero(labels > 0).squeeze(1)
+        labels_pos = labels[sampled_pos_inds_subset]
+        map_inds = 4 * labels_pos[:, None] + Tensor([0, 1, 2, 3])
 
-            box_loss = P.SmoothL1Loss()(
-                box_regression[sampled_pos_inds_subset[:, None], map_inds],
-                regression_targets[sampled_pos_inds_subset],
-            )
-            box_loss = box_loss / labels.size()
-        else:
-            box_loss = 0
+        box_loss = P.SmoothL1Loss()(
+            box_regression[sampled_pos_inds_subset[:, None], map_inds],
+            regression_targets[sampled_pos_inds_subset],
+        )
+        box_loss = box_loss / labels.size()
+
 
         return classification_loss, box_loss

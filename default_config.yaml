@@ -82,6 +82,15 @@ top_n_train: 1000
 top_n_test: 1000
 expand_rate: 0.4
 
+# roi
+roi:
+  box_head:
+    resolution: 7
+    scales: (0.25,)
+    sample_rate: 2
+    mlp_dim: 1024
+    soft_mask_feat_rate: 0
+    class_count: 2
 
 # bbox_assign_sampler
 neg_iou_thr: 0.3
