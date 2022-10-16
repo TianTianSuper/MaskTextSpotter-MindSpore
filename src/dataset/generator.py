@@ -36,6 +36,7 @@ class DatasetsManager:
         self.batch_size = config.batch_size
         self.config = config
         self.ignore_difficult = False
+        self.use_charann = True
 
     def __gt2boxes(self, gt):
         parts = gt.strip().split(",")
