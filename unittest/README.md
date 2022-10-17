@@ -31,8 +31,8 @@
 | utils         | `src/model_utils/images.py`              | :black_circle:          |                                                              |
 | utils         | `src/model_utils/config.py`              | :no_entry_sign:         | implemented from maskrcnn(mindspore)<br>and run in good status |
 | utils         | `src/model_utils/local_adapter.py`       | :no_entry_sign:         | implemented from maskrcnn(mindspore)                         |
-| utils (layer) | `src/model_utils/blocks.py`              | :black_circle:          |                                                              |
-| utils (layer) | `src/model_utils/norm.py`                | :black_circle:          |                                                              |
+| utils (layer) | `src/model_utils/blocks.py`              | :white_check_mark:      |                                                              |
+| utils (layer) | `src/model_utils/norm.py`                | :white_check_mark:      |                                                              |
 | utils         | `src/model_utils/sampler.py`             | :black_circle:          |                                                              |
 | utils         | `src/model_utils/tools.py`               | :black_circle:          |                                                              |
 | main          | `src/general.py`                         | :black_circle:          |                                                              |
