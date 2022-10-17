@@ -166,17 +166,19 @@ class DatasetsManager:
                 if len(charsboxes) == 0:
                     for _ in range(len(words)):
                         charsboxes.append([charbbs])
-                return words, np.array(keep_boxes), charsboxes, segmentations, labels
+                words = words
+                boxes = np.array(keep_boxes)
+                charsboxes = charsboxes
+                segmentations = segmentations
+                labels = labels
         else:
             words.append("")
             charbbs = np.zeros((10,), dtype=np.float32)
-            return (
-                words,
-                np.zeros((1, 5), dtype=np.float32),
-                [[charbbs]],
-                [[np.zeros((8,), dtype=np.float32)]],
-                [1]
-            )
+            words = words
+            boxes = np.zeros((1, 5), dtype=np.float32)
+            charsboxes = [[charbbs]]
+            segmentations = [[np.zeros((8,), dtype=np.float32)]]
+            labels = [1]
         
         target = Boxes(
             boxes[:, :4], image.size, mode="xyxy", use_char_ann=self.use_charann
@@ -243,4 +245,4 @@ class DatasetsManager:
 if __name__ == '__main__':
     dm = DatasetsManager(config=config)
     dm.init_mindrecords()
-    dm.init_dataset()
+    ds = dm.init_dataset()
