@@ -8,19 +8,19 @@
 
 ### 检测
 
-| Model                                                        | F-measure<br />(Strong Lexicon) | F-measure<br />Week Lexicon) | F-measure<br />Generic Lexicon) |
-| ------------------------------------------------------------ | ------------------------------- | ---------------------------- | ------------------------------- |
-| [MaskTextSpotter v1](https://github.com/lvpengyuan/masktextspotter.caffe2#models) | 79.3                            | 74.5                         | 64.2                            |
-| [MaskTextSpotter v2](https://github.com/MhLiao/MaskTextSpotter) | 82.4                            | 78.1                         | 73.6                            |
-| [MaskTextSpotter v3](https://github.com/MhLiao/MaskTextSpotterV3) | **83.1**                        | **79.1**                     | **75.1**                        |
+| Model                                                        | F-measure<br />(Strong Lexicon) | F-measure<br />(Week Lexicon) | F-measure<br />(Generic Lexicon) |
+| ------------------------------------------------------------ | ------------------------------- | ----------------------------- | -------------------------------- |
+| [MaskTextSpotter v1](https://github.com/lvpengyuan/masktextspotter.caffe2#models) | 79.3                            | 74.5                          | 64.2                             |
+| [MaskTextSpotter v2](https://github.com/MhLiao/MaskTextSpotter) | 82.4                            | 78.1                          | 73.6                             |
+| [MaskTextSpotter v3](https://github.com/MhLiao/MaskTextSpotterV3) | **83.1**                        | **79.1**                      | **75.1**                         |
 
 ### 识别
 
-| Model                                                        | F-measure<br />(Strong Lexicon) | F-measure<br />Week Lexicon) | F-measure<br />Generic Lexicon) |
-| ------------------------------------------------------------ | ------------------------------- | ---------------------------- | ------------------------------- |
-| [MaskTextSpotter v1](https://github.com/lvpengyuan/masktextspotter.caffe2#models) | 79.3                            | 73.0                         | 62.4                            |
-| [MaskTextSpotter v2](https://github.com/MhLiao/MaskTextSpotter) | 83.0                            | 77.7                         | **73.5**                        |
-| [MaskTextSpotter v3](https://github.com/MhLiao/MaskTextSpotterV3) | **83.3**                        | **78.1**                     | 72.4                            |
+| Model                                                        | F-measure<br />(Strong Lexicon) | F-measure<br />(Week Lexicon) | F-measure<br />(Generic Lexicon) |
+| ------------------------------------------------------------ | ------------------------------- | ----------------------------- | -------------------------------- |
+| [MaskTextSpotter v1](https://github.com/lvpengyuan/masktextspotter.caffe2#models) | 79.3                            | 73.0                          | 62.4                             |
+| [MaskTextSpotter v2](https://github.com/MhLiao/MaskTextSpotter) | 83.0                            | 77.7                          | **73.5**                         |
+| [MaskTextSpotter v3](https://github.com/MhLiao/MaskTextSpotterV3) | **83.3**                        | **78.1**                      | 72.4                             |
 
 ### 性能
 
