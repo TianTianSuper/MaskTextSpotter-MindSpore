@@ -34,16 +34,16 @@ class TestImg(object):
         to_image_list([Tensor(img,mstype.float32),Tensor(img,mstype.float32)])
         to_image_list((Tensor(img,mstype.float32),Tensor(img,mstype.float32)))
     
-    @pytest.mark.img
-    def test_tols_target(self):
-        with open('unittest/case/img.pkl', 'rb') as f:
-            img = pkl.load(f)
-            print(img)
-        to_image_target_list(Tensor([img, img],mstype.float32))
-        with pytest.raises(AssertionError):
-            to_image_target_list(Tensor(img, mstype.float32))
-        to_image_target_list([Tensor(img,mstype.float32),Tensor(img,mstype.float32)])
-        to_image_target_list((Tensor(img,mstype.float32),Tensor(img,mstype.float32)))    
+    # @pytest.mark.img
+    # def test_tols_target(self):
+    #     with open('unittest/case/img.pkl', 'rb') as f:
+    #         img = pkl.load(f)
+    #         print(img)
+    #     to_image_target_list(Tensor([img, img],mstype.float32))
+    #     with pytest.raises(AssertionError):
+    #         to_image_target_list(Tensor(img, mstype.float32))
+    #     to_image_target_list([Tensor(img,mstype.float32),Tensor(img,mstype.float32)])
+    #     to_image_target_list((Tensor(img,mstype.float32),Tensor(img,mstype.float32)))    
 
 if __name__ == '__main__':
     pytest.main(['-vv','-s','--html=unittest/results/images.html', '-m=img'])
