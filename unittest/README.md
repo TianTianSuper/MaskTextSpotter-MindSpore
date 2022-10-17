@@ -34,7 +34,7 @@
 | utils (layer) | `src/model_utils/blocks.py`              | :white_check_mark:      |                                                              |
 | utils (layer) | `src/model_utils/norm.py`                | :white_check_mark:      |                                                              |
 | utils         | `src/model_utils/sampler.py`             | :no_entry_sign:         | 未使用                                                       |
-| utils         | `src/model_utils/tools.py`               | :black_circle:          |                                                              |
+| utils         | `src/model_utils/tools.py`               | :white_check_mark:      |                                                              |
 | main          | `src/general.py`                         | :black_circle:          |                                                              |
 | main          | `src/lr_schedule.py`                     | :black_circle:          |                                                              |
 | main          | `src/network_define.py`                  | :black_circle:          |                                                              |
