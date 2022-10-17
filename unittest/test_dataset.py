@@ -12,7 +12,7 @@ from mindspore.common.initializer import Normal
 from src.dataset.generator import DatasetsManager
 from src.model_utils.config import config
 
-class Testfpn(object):
+class TestDataset(object):
     @pytest.mark.d
     def test_normal_input(self):
         dm = DatasetsManager(config=config)

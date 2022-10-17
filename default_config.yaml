@@ -7,7 +7,7 @@ data_path: "/cache/data"
 output_path: "/cache/train"
 load_path: "/cache/checkpoint_path"
 checkpoint_path: './checkpoint/'
-checkpoint_file: './checkpoint/mask_rcnn-12_7393.ckpt'
+checkpoint_file: ''
 device_target: GPU
 enable_profiling: False
 
@@ -22,7 +22,7 @@ between_thresholds: -2
 # ==============================================================================
 
 # dataset
-datasets_root: "/home/tiantian/Documents/internship/MindSpore/OCR/MaskTextSpotterV3/datasets"
+datasets_root: "./datasets"
 datasets_name:
 - "icdar2013"
 - "icdar2015"
