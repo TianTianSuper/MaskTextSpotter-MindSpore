@@ -22,7 +22,7 @@ def get_device_id():
 
 def train_masktextspotter():
     device_target = config.device_target
-    context.set_context(mode=context.GRAPH_MODE, device_target=device_target, device_id=get_device_id())
+    context.(mode=context.GRAPH_MODE, device_target=device_target, device_id=get_device_id())
 
     print('\ntrain.py config:\n', config)
     print("Start train for maskrcnn!")
