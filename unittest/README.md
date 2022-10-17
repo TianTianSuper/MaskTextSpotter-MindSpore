@@ -26,7 +26,7 @@
 | roi           | `src/roi/mask_head/predictor.py`         | :black_circle:             |
 | utils         | `src/model_utils/assigner.py`            | :no_entry_sign: 模块未使用 |
 | utils (bbox)  | `src/model_utils/bbox_ops.py`            | :black_circle:             |
-| utils (bbox)  | `src/model_utils/bounding_box.py`        | :black_circle:             |
+| utils (bbox)  | `src/model_utils/bounding_box.py`        | :warning: 'crop' and 'rotate' should be tested after testing seg_mask             |
 | utils (bbox)  | `src/model_utils/box_coder.py`           | :black_circle:             |
 | utils         | `src/model_utils/images.py`              | :black_circle:             |
 | utils         | `src/model_utils/config.py`              | :black_circle:             |

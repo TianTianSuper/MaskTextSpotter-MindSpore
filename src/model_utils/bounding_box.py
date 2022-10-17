@@ -8,7 +8,7 @@ from mindspore.common import dtype as mstype
 from mindspore import context
 
 class Boxes(object):
-    def __init__(self, bbox, image_size, mode="xyxy", use_char_ann=True, is_fake=False):
+    def __init__(self, bbox, image_size, mode="xyxy", use_char_ann=True):
         bbox = Tensor(bbox, mindspore.float32)
         if bbox.ndim != 2:
             raise ValueError("bbox should have 2 dimensions, but got {}".format(bbox.ndim))
@@ -28,6 +28,7 @@ class Boxes(object):
         self.split_xyxy = P.Split(-1, self.bbox.shape[-1])
         self.concat = P.Concat(-1)
         self.field_concat = P.Concat(1)
+        self.cast = P.Cast()
 
         # transpose
         self.flip_left_right = 0
@@ -216,17 +217,17 @@ class Boxes(object):
             bbox.add_field(key, value[item])
         return bbox
 
-    def clip_to_image(self, remove_empty=True):
+    def clip_to_image(self):
         remove = 1
         self.bbox[:, 0] = C.clip_by_value(self.bbox[:, 0], 0, self.size[0] - remove)
         self.bbox[:, 1] = C.clip_by_value(self.bbox[:, 1], 0, self.size[1] - remove)
         self.bbox[:, 2] = C.clip_by_value(self.bbox[:, 2], 0, self.size[0] - remove)
         self.bbox[:, 3] = C.clip_by_value(self.bbox[:, 3], 0, self.size[1] - remove)
 
-        if remove_empty:
-            box = self.bbox
-            keep = (box[:, 3] > box[:, 1]) & (box[:, 2] > box[:, 0])
-            return self[keep]
+        # if remove_empty:
+        #     box = self.bbox
+        #     keep = (box[:, 3] > box[:, 1]) & (box[:, 2] > box[:, 0])
+        #     return self[keep]
         return self
 
     def area(self):
@@ -252,12 +253,12 @@ class Boxes(object):
         return s
 
 if __name__ == "__main__":
-    context.set_context(device_target='GPU',mode=context.GRAPH_MODE,enable_graph_kernel=True)
-    bbox = Boxes([[0, 0, 10, 10], [0, 0, 5, 5]], (10, 10))
-    s_bbox = bbox.resize((5, 5))
-    print(s_bbox)
-    print(s_bbox.bbox)
-
-    t_bbox = bbox.transpose(0)
-    print(t_bbox)
-    print(t_bbox.bbox)
+    import pickle as pkl
+    # context.set_context(device_target='GPU',mode=context.GRAPH_MODE,enable_graph_kernel=True)
+    with open('unittest/case/boxes.pkl', 'rb') as f:
+        box_raw = pkl.load(f)
+    with open('unittest/case/img.pkl', 'rb') as f:
+        img = pkl.load(f)
+    shape_raw = img.shape[-2:]
+    bbox = Boxes(box_raw[:, :4], shape_raw)
+    bbox.crop(bbox.bbox)

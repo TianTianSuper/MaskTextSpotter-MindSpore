@@ -37,8 +37,9 @@ class DatasetsManager:
         self.config = config
         self.ignore_difficult = False
         self.use_charann = True
+        self.char_classes = "_0123456789abcdefghijklmnopqrstuvwxyz"
 
-    def __gt2boxes(self, gt):
+    def gt2boxes(self, gt):
         parts = gt.strip().split(",")
         if "\xef\xbb\xbf" in parts[0]:
             parts[0] = parts[0][3:]
@@ -97,8 +98,9 @@ class DatasetsManager:
 
         writer.commit()
         return True
-
-    def __restore_dataset(self, image, ground_trues):
+    
+    def transfer(self, image, ground_trues):
+        image = cv2.imdecode(np.frombuffer(image, np.uint8), -1)
         image_bgr = image.copy()
         image_bgr[:, :, 0] = image[:, :, 2]
         image_bgr[:, :, 1] = image[:, :, 1]
@@ -110,7 +112,7 @@ class DatasetsManager:
         words, boxes, charsboxes, segmentations, labels = [], [], [], [], []
         for gt in gts:
             charbbs = []
-            strs, loc = self.__gt2boxes(gt)
+            strs, loc = self.gt2boxes(gt)
             word = strs[0]
             if word == "###":
                 if self.ignore_difficult:
@@ -166,29 +168,42 @@ class DatasetsManager:
                 if len(charsboxes) == 0:
                     for _ in range(len(words)):
                         charsboxes.append([charbbs])
-                words = words
-                boxes = np.array(keep_boxes)
-                charsboxes = charsboxes
-                segmentations = segmentations
-                labels = labels
+                return (
+                    image_bgr,
+                    words,
+                    np.array(keep_boxes),
+                    charsboxes,
+                    segmentations,
+                    labels
+                )
+            else:
+                return image_bgr, words, np.array(keep_boxes), charsboxes, segmentations, labels
+ 
+
         else:
             words.append("")
             charbbs = np.zeros((10,), dtype=np.float32)
-            words = words
-            boxes = np.zeros((1, 5), dtype=np.float32)
-            charsboxes = [[charbbs]]
-            segmentations = [[np.zeros((8,), dtype=np.float32)]]
-            labels = [1]
-        
+            return (
+                image_bgr,
+                words,
+                np.zeros((1, 5), dtype=np.float32),
+                [[charbbs]],
+                [[np.zeros((8,), dtype=np.float32)]],
+                [1]
+            )
+
+    def restore_dataset(self, image, ground_trues):
+        image, words, boxes, charsbbs, segmentations, labels = self.transfer(image, ground_trues)
+        image_shape = image.shape[-2:]
         target = Boxes(
-            boxes[:, :4], image.size, mode="xyxy", use_char_ann=self.use_charann
+            boxes[:, :4], image_shape, mode="xyxy", use_char_ann=self.use_charann
         )
         if self.ignore_difficult:
             labels = msnp.from_numpy(np.array(labels))
         else:
             labels = msnp.ones(len(boxes))
         target.add_field("labels", labels)
-        masks = SegmentationMask(segmentations, image.size)
+        masks = SegmentationMask(segmentations, image_shape)
         target.add_field("masks", masks)
         if words[0] == "":
             use_char_ann = False
@@ -197,9 +212,10 @@ class DatasetsManager:
         if not self.use_charann:
             use_char_ann = False
         char_masks = SegmentationCharMask(
-            charsboxes, words=words, use_char_ann=use_char_ann, size=image.size, char_num_classes=len(self.char_classes)
+            charsbbs, words=words, use_char_ann=use_char_ann, size=image_shape, char_num_classes=len(self.char_classes)
         )
         target.add_field("char_masks", char_masks)
+        return image, target
 
         
     def char2num(self, chars):
@@ -207,7 +223,7 @@ class DatasetsManager:
         nums = [self.char_classes.index(c.lower()) for c in chars]
         return nums
 
-    def __init_dataset(self):
+    def init_dataset(self):
         cv2.setNumThreads(0)
         dataset.config.set_prefetch_size(8)
         load_dir = os.path.join(self.mindrecord_dir, self.prefix+'0')
@@ -215,7 +231,7 @@ class DatasetsManager:
         decode = C.Decode()
         datacomb = datacomb.map(decode, input_columns=["image"])
         compose_map_func = (lambda image, ground_trues:
-                            self.__restore_dataset(image, ground_trues))
+                            self.restore_dataset(image, ground_trues))
         
         if self.train_status:
             datacomb = datacomb.map(
@@ -236,12 +252,29 @@ class DatasetsManager:
                     num_parallel_workers=self.workers)
             datacomb = datacomb.batch(self.batch_size, drop_remainder=True)
         return datacomb
-    
-    def init_dataset(self):
-        return self.__init_dataset()
 
 
 if __name__ == '__main__':
+    import pickle as pkl
     dm = DatasetsManager(config=config)
-    dm.init_mindrecords()
-    ds = dm.init_dataset()
+    with open('datasets/icdar2013/train_images/100.jpg', 'rb') as f:
+        img = f.read()
+    with open('datasets/icdar2013/train_gts/100.jpg.txt', 'rb') as f:
+        gt = f.read()
+    transferred = dm.transfer(img, gt)
+    with open('/home/tiantian/Documents/MaskTextSpotter-MindSpore/unittest/case/img.pkl', 'wb') as f:
+        pkl.dump(transferred[0], f)
+    # words, boxes, charsbbs, segmentations, labels
+    with open('/home/tiantian/Documents/MaskTextSpotter-MindSpore/unittest/case/words.pkl', 'wb') as f:
+        pkl.dump(transferred[1], f)
+    with open('/home/tiantian/Documents/MaskTextSpotter-MindSpore/unittest/case/boxes.pkl', 'wb') as f:
+        pkl.dump(transferred[2], f)
+    with open('/home/tiantian/Documents/MaskTextSpotter-MindSpore/unittest/case/charbboxs.pkl', 'wb') as f:
+        pkl.dump(transferred[3], f)
+    with open('/home/tiantian/Documents/MaskTextSpotter-MindSpore/unittest/case/segmentations.pkl', 'wb') as f:
+        pkl.dump(transferred[4], f)
+    with open('/home/tiantian/Documents/MaskTextSpotter-MindSpore/unittest/case/labels.pkl', 'wb') as f:
+        pkl.dump(transferred[5], f)
+    _, target = dm.restore_dataset(img, gt)
+    with open('/home/tiantian/Documents/MaskTextSpotter-MindSpore/unittest/case/target.pkl', 'wb') as f:
+        pkl.dump(target, f)
