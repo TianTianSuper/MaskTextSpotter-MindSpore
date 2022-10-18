@@ -24,9 +24,10 @@ class MaskRCNNFPNFeatureExtractor(nn.Cell):
         scales = config.roi.mask_head.scales
         sampling_rate = config.roi.sample_rate
         pooler = Pooler(
-            output_size=(resolution_h, resolution_w),
+            out_size_h=resolution_h, 
+            out_size_w=resolution_w,
             scales=scales,
-            sampling_ratio=sampling_rate,
+            sample_num=sampling_rate,
         )
         input_size = config.resnet_out_channels[-1]
         self.pooler = pooler
@@ -38,7 +39,7 @@ class MaskRCNNFPNFeatureExtractor(nn.Cell):
         for layer_idx, layer_features in enumerate(layers, 1):
             layer_name = "mask_fcn{}".format(layer_idx)
             weight_init = HeNormal(mode='fan_out', nonlinearity="relu")
-            module = nn.Conv2d(next_feature, layer_features, 3, stride=1, padding=1, weight_init=weight_init, bias_init='zero')
+            module = nn.Conv2d(next_feature, layer_features, 3, stride=1, padding=1, weight_init=weight_init, bias_init='zero', pad_mode='pad')
             self.insert_child_to_cell(layer_name, module)
             next_feature = layer_features
             self.blocks.append(layer_name)

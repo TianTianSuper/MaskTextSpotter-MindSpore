@@ -15,9 +15,10 @@ class Fpn2Mlp(nn.Cell):
         scales = config.roi.box_head.scales
         sampling_rate = config.roi.box_head.sample_rate
         pooler = Pooler(
-            output_size=(self.resolution, self.resolution),
+            out_size_h=self.resolution,
+            out_size_w=self.resolution,
             scales=scales,
-            sampling_ratio=sampling_rate,
+            sample_num=sampling_rate,
         )
 
         input_size = config.resnet_out_channels[-1] * self.resolution ** 2

@@ -14,6 +14,7 @@ class FastRCNNLoss(nn.Cell):
             fg_bg_sampler (BalancedPositiveNegativeSampler)
             box_coder (BoxCoder)
         """
+        super(FastRCNNLoss, self).__init__()
         self.proposal_matcher = proposal_matcher
         self.fg_bg_sampler = fg_bg_sampler
         self.box_coder = box_coder

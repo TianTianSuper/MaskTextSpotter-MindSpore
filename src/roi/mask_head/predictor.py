@@ -1,6 +1,6 @@
 import mindspore
 import mindspore.numpy as np
-from mindspore import nn, ops, Tensor
+from mindspore import nn, ops, Tensor, Parameter
 from mindspore.ops import operations as P
 from mindspore.common.initializer import HeNormal, Normal
 
@@ -36,9 +36,9 @@ class SeqCharMaskRCNNC4Predictor(nn.Cell):
         weight_init = HeNormal(mode="fan_out", nonlinearity="relu")
         bias_init = "zero"
 
-        self.conv5_mask = nn.Conv2dTranspose(num_inputs, dim_reduced, 2, 2, 0, weight_init=weight_init, bias_init=bias_init)
-        self.mask_fcn_logits = nn.Conv2d(dim_reduced, num_classes, 1, 1, 0, weight_init=weight_init, bias_init=bias_init)
-        self.char_mask_fcn_logits = nn.Conv2d(dim_reduced, char_num_classes, 1, 1, 0, weight_init=weight_init, bias_init=bias_init)
+        self.conv5_mask = nn.Conv2dTranspose(num_inputs, dim_reduced, 2, 2, weight_init=weight_init, bias_init=bias_init)
+        self.mask_fcn_logits = nn.Conv2d(dim_reduced, num_classes, 1, 1, weight_init=weight_init, bias_init=bias_init)
+        self.char_mask_fcn_logits = nn.Conv2d(dim_reduced, char_num_classes, 1, 1, weight_init=weight_init, bias_init=bias_init)
         self.seq = SequencePredictor(config, dim_reduced)
 
     def forward(self, x, decoder_targets=None, word_targets=None):
@@ -72,9 +72,9 @@ class SequencePredictor(nn.Cell):
         bias_init = "zero"
 
         self.seq_encoder = nn.CellList(
-            nn.Conv2d(dim_in, 256, 3, padding=1, weight_init=weight_init, bias_init=bias_init),
+            nn.Conv2d(dim_in, 256, 3, pad_mode='pad', padding=1, weight_init=weight_init, bias_init=bias_init),
             nn.ReLU(),
-            nn.MaxPool2d(2, stride=2, ceil_mode=True, weight_init=weight_init, bias_init=bias_init),
+            nn.MaxPool2d(2, stride=2), # TQ1: can not init weights and bias in this layer
         )
         x_onehot_size = int(config.sequence.resize_w / 2)
         y_onehot_size = int(config.sequence.resize_h / 2)
@@ -84,12 +84,12 @@ class SequencePredictor(nn.Cell):
         # self.criterion_seq_decoder = nn.NLLLoss(ignore_index = -1, reduce=False)
         self.criterion_seq_decoder = nn.NLLLoss(ignore_index=-1, reduction="none")
         # self.rescale = nn.Upsample(size=(16, 64), mode="bilinear", align_corners=False)
-        self.rescale = nn.ResizeBilinear(size=(config.sequence.resize_h, config.sequence.resize_w), mode="bilinear", align_corners=False)
+        self.rescale = ops.ResizeBilinear(size=(config.sequence.resize_h, config.sequence.resize_w))
 
-        self.x_onehot = nn.Embedding(x_onehot_size, x_onehot_size)
-        self.x_onehot.weight.data = ops.eye(x_onehot_size)
-        self.y_onehot = nn.Embedding(y_onehot_size, y_onehot_size)
-        self.y_onehot.weight.data = ops.eye(y_onehot_size)
+        x_weight_init = ops.eye(x_onehot_size, x_onehot_size, mindspore.float32)
+        y_weight_init = ops.eye(y_onehot_size, y_onehot_size, mindspore.float32)
+        self.x_onehot = nn.Embedding(x_onehot_size, x_onehot_size, embedding_table=x_weight_init)
+        self.y_onehot = nn.Embedding(y_onehot_size, y_onehot_size, embedding_table=y_weight_init)
 
         self.concat = P.Concat(axis=1)
 
@@ -307,8 +307,8 @@ class BahdanauAttnDecoderRNN(nn.Cell):
         self.n_layers = n_layers
         self.dropout_p = dropout_p
         # Define layers
-        self.embedding = nn.Embedding(output_size, embed_size)
-        self.embedding.weight.data = ops.eye(embed_size)
+        embed_weight_init = ops.eye(embed_size,embed_size,mindspore.float32)
+        self.embedding = nn.Embedding(output_size, embed_size, embedding_table=embed_weight_init)
         # self.dropout = nn.Dropout(dropout_p)
         self.word_linear = nn.Dense(embed_size, hidden_size)
         self.attn = Attn("concat", hidden_size, embed_size, onehot_size[0] + onehot_size[1])
@@ -358,8 +358,11 @@ class Attn(nn.Cell):
         self.embed_size = embed_size
         self.attn = nn.Dense(2 * self.hidden_size + onehot_size, hidden_size)
         # self.attn = nn.Linear(hidden_size, hidden_size)
-        stdv = 1.0 / np.sqrt(self.v.shape(0))
-        self.v = mindspore.Parameter(Tensor(hidden_size, init=Normal(sigma=stdv)))
+        # self.v = Parameter(np.rand(hidden_size))
+        stdv = 1.0 / np.sqrt(Tensor(hidden_size, mindspore.float32))
+        self.v = Parameter(Tensor(dtype=mindspore.float32, shape=(hidden_size,),init=Normal(stdv)))
+        # stdv = 1.0 / np.sqrt(self.v.shape(0))
+        # self.v = mindspore.Parameter(Tensor(hidden_size, init=Normal(sigma=stdv)))
 
     def construct(self, hidden, encoder_outputs):
         """

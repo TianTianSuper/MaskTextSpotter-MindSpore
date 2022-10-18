@@ -9,6 +9,7 @@ class CharMaskRCNNLossComputation(nn.Cell):
             proposal_matcher (Matcher)
             discretization_size (int)
         """
+        super(CharMaskRCNNLossComputation, self).__init__()
         self.use_weighted_loss = use_weighted_loss
         self.concat = P.Concat()
 

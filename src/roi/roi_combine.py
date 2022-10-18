@@ -2,6 +2,7 @@ import mindspore
 from mindspore import nn
 from .box_head.head import ROIBoxHead
 from .mask_head.head import ROIMaskHead
+from src.model_utils.matcher import Matcher
 
 class CombinedROIHeads(nn.Cell):
     """
@@ -9,11 +10,15 @@ class CombinedROIHeads(nn.Cell):
     head.
     """
 
-    def __init__(self, config, heads):
-        super(CombinedROIHeads, self).__init__(heads)
+    def __init__(self, config):
+        super(CombinedROIHeads, self).__init__()
+        matcher = Matcher(config.roi.box_head.fg_iou,
+                          config.roi.box_head.bg_iou)
+
         self.config = config
         self.box = ROIBoxHead(config)
-        self.mask = ROIMaskHead(config)
+        self.mask = ROIMaskHead(config, matcher, 
+                                (config.roi.mask_head.resolution_w, config.roi.mask_head.resolution_h))
 
     def construct(self, features, proposals, targets=None):
         losses = {}

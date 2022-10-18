@@ -6,6 +6,9 @@ from .inference import PostHandler
 from .predictor import FpnPredict
 from .loss import FastRCNNLoss
 
+from src.model_utils.sampler import BalencedSampler
+from src.model_utils.box_coder import BoxCoder
+
 
 class ROIBoxHead(nn.Cell):
     """
@@ -15,10 +18,18 @@ class ROIBoxHead(nn.Cell):
     def __init__(self, config):
         super(ROIBoxHead, self).__init__()
         self.config = config
+
+        bbox_reg_weights = self.config.roi.box_head.reg_weights
+        box_coder = BoxCoder(weights=bbox_reg_weights)
+
+        fg_bg_sampler = BalencedSampler(
+            self.config.roi.box_head.image_batchsize, self.config.roi.box_head.positive_frac
+        )
+
         self.feature_extractor = Fpn2Mlp(config)
         self.predictor = FpnPredict(config)
         self.post_processor = PostHandler(config)
-        self.loss_evaluator = FastRCNNLoss(config)
+        self.loss_evaluator = FastRCNNLoss(config, fg_bg_sampler, box_coder, config)
 
     def construct(self, features, proposals, targets=None):
         """

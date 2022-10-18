@@ -45,8 +45,8 @@ class Pooler(nn.Cell):
         self.out_size_h = out_size_h
         self.out_size_w = out_size_w
 
-        level_min = -np.log2(scales[0])
-        level_max = -np.log2(scales[-1])
+        level_min = -np.log2(Tensor(scales[0]))
+        level_max = -np.log2(Tensor(scales[-1]))
 
         self.map_levels = Level(level_min, level_max)
 
@@ -70,7 +70,7 @@ class Pooler(nn.Cell):
         data_type = input[0].dtype
         res = np.zeros((rois_count, channels_count, self.out_size_h, self.out_size_w), data_type)
         for level, (level_feat, pooler) in enumerate(zip(input, self.poolers)):
-            idx = ops.nonzero(level == levels).squeeze(1) # E1: nonzero全部无法使用
+            idx = ops.nonzero(level == levels).squeeze(1)
             rois_of_level = rois[idx]
             res[idx] = pooler(level_feat, rois_of_level)
         

@@ -1,7 +1,7 @@
 import mindspore
 from mindspore import nn
 
-from src.masktextspotter.resnet50 import ResNetFea
+from src.masktextspotter.resnet50 import ResNetFea, ResidualBlockUsing
 from src.masktextspotter.spn import SEG
 from src.roi.roi_combine import CombinedROIHeads
 
@@ -26,7 +26,11 @@ class MaskTextSpotter3(nn.Cell):
     def __init__(self, config):
         super(MaskTextSpotter3, self).__init__()
         self.config = config
-        self.backbone = ResNetFea(config)
+        self.backbone = ResNetFea(ResidualBlockUsing,
+                                  config.resnet_block,
+                                  config.resnet_in_channels,
+                                  config.resnet_out_channels,
+                                  False)
         self.proposal = SEG(config)
         self.roi_heads = CombinedROIHeads(config)
 

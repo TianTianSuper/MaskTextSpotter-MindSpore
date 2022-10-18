@@ -4,7 +4,7 @@ from src.model_utils.config import config
 from src.general import MaskTextSpotter3, GeneralLoss
 from src.network_define import LossCallBack
 from src.dataset.generator import DatasetsManager
-from src.lr_schedule import WarmUpMultiStepsLR
+from src.lr_schedule import warmup_lr
 
 import mindspore.common.dtype as mstype
 from mindspore import context, Tensor, Parameter
@@ -22,7 +22,7 @@ def get_device_id():
 
 def train_masktextspotter():
     device_target = config.device_target
-    context.(mode=context.GRAPH_MODE, device_target=device_target, device_id=get_device_id())
+    context.set_context(mode=context.GRAPH_MODE, device_target=device_target, device_id=get_device_id())
 
     print('\ntrain.py config:\n', config)
     print("Start train for maskrcnn!")
@@ -46,6 +46,7 @@ def train_masktextspotter():
     mindrecord_file = os.path.join(mindrecord_dir, prefix + "0")
     if rank == 0 and not os.path.exists(mindrecord_file):
         dm = DatasetsManager(config)
+        dm.init_mindrecords()
         dataset = dm.init_dataset()
     dataset_size = dataset.get_dataset_size()
     
@@ -53,7 +54,8 @@ def train_masktextspotter():
     net.set_train(True)
 
     loss = GeneralLoss()
-    lr = WarmUpMultiStepsLR(config)
+    lr = Tensor(warmup_lr(config, rank_size=device_num, start_steps=config.pretrain_epoch_size * dataset_size),
+                    mstype.float32)
     opt = Momentum(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum,
                    weight_decay=config.weight_decay, loss_scale=config.loss_scale)
 
@@ -70,7 +72,7 @@ def train_masktextspotter():
         if not os.path.exists(config.save_checkpoint_path):
             os.mkdir(config.save_checkpoint_path)
         save_checkpoint_path = os.path.join(config.save_checkpoint_path, 'ckpt_' + str(rank) + '/')
-        ckpoint_cb = ModelCheckpoint(prefix='mask_rcnn', directory=save_checkpoint_path, config=ckptconfig)
+        ckpoint_cb = ModelCheckpoint(prefix='masktextspotter', directory=save_checkpoint_path, config=ckptconfig)
         cbs += [ckpoint_cb]
 
     model = Model(net)
