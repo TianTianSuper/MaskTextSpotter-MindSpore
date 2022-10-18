@@ -25,7 +25,7 @@
 | roi           | `src/roi/mask_head/loss.py`              | :black_circle:     |                                                              |
 | roi           | `src/roi/mask_head/predictor.py`         | :black_circle:     |                                                              |
 | utils         | `src/model_utils/assigner.py`            | :no_entry_sign:    | 未使用                                                       |
-| utils (bbox)  | `src/model_utils/bbox_ops.py`            | :black_circle:     |                                                              |
+| utils (bbox)  | `src/model_utils/bbox_ops.py`            | :white_check_mark: |                                                              |
 | utils (bbox)  | `src/model_utils/bounding_box.py`        | :white_check_mark: |                                                              |
 | utils (bbox)  | `src/model_utils/box_coder.py`           | :white_check_mark: |                                                              |
 | utils         | `src/model_utils/images.py`              | :white_check_mark: |                                                              |
