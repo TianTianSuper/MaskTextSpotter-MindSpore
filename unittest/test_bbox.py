@@ -10,6 +10,7 @@ from mindspore import dtype as mstype
 from mindspore.ops import normal
 from mindspore.common.initializer import Normal
 from src.model_utils.bounding_box import Boxes
+from src.masktextspotter.mask import SegmentationMask
 from src.model_utils.config import config
 import pickle as pkl
 
@@ -70,13 +71,18 @@ class TestBBox(object):
 
     @pytest.mark.bbox
     def test_rotate(self):
-        # with open('unittest/case/target.pkl', 'rb') as f:
-        #     target = pkl.load(f)
-        
-        # target.rotate(2, 2, 2, 1)
-        pass
-        # Warning: due to unfinished test in mask, so delayed
-        # including: poly_to_box rotate
+        with open('unittest/case/boxes.pkl', 'rb') as f:
+            box_raw = pkl.load(f)
+        with open('unittest/case/img.pkl', 'rb') as f:
+            img = pkl.load(f)
+        with open('unittest/case/segmentations.pkl', 'rb') as f:
+            seg = pkl.load(f)
+
+        sg = SegmentationMask(seg, img.shape[-2:], 0)
+        shape_raw = img.shape[-2:]
+        bbox = Boxes(box_raw[:, :4], shape_raw)
+        bbox.add_field("masks", sg)
+        bbox.rotate(15, 'center', 0,0)
 
     @pytest.mark.bbox
     def test_transpose(self):
@@ -91,7 +97,7 @@ class TestBBox(object):
         bbox.transpose(1)
     
     @pytest.mark.bbox
-    def test_clip_crop(self):
+    def test_clip(self):
         with open('unittest/case/boxes.pkl', 'rb') as f:
             box_raw = pkl.load(f)
         with open('unittest/case/img.pkl', 'rb') as f:
@@ -100,8 +106,17 @@ class TestBBox(object):
         bbox = Boxes(box_raw[:, :4], shape_raw)
 
         bbox.clip_to_image()
-        # warning: crop need to be tested after seg_mask
-        # bbox.crop(box_raw[:,:2])
+
+    @pytest.mark.bbox
+    def test_crop(self):
+        with open('unittest/case/boxes.pkl', 'rb') as f:
+            box_raw = pkl.load(f)
+        with open('unittest/case/img.pkl', 'rb') as f:
+            img = pkl.load(f)
+        shape_raw = img.shape[-2:]
+        bbox = Boxes(box_raw[:, :4], shape_raw)
+
+        bbox.crop(box_raw[1])
 
 if __name__ == '__main__':
     pytest.main(['-vv','-s','--html=unittest/results/bbox.html', '-m=bbox'])

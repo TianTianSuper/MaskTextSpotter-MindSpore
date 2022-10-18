@@ -3,6 +3,7 @@ import mindspore.numpy as np
 from mindspore import nn
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
+from mindspore.ops import bitwise_and, nonzero
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
 from mindspore import context
@@ -25,7 +26,6 @@ class Boxes(object):
 
         # utils
         self.isinstance = P.IsInstance()
-        self.split_xyxy = P.Split(-1, self.bbox.shape[-1])
         self.concat = P.Concat(-1)
         self.field_concat = P.Concat(1)
         self.cast = P.Cast()
@@ -57,16 +57,16 @@ class Boxes(object):
 
     def _split_to_xyxy(self):
         if self.mode == 'xyxy':
-            xmin, ymin, xmax, ymax = self.split_xyxy(self.bbox)
+            xmin, ymin, xmax, ymax = self.bbox.split(-1, self.bbox.shape[-1])
             return xmin, ymin, xmax, ymax
         elif self.mode == 'xywh':
             remove = 1
-            xmin, ymin, w, h = self.split_xyxy(self.bbox)
+            xmin, ymin, w, h = self.bbox.split(-1, self.bbox.shape[-1])
             return (
                 xmin,
                 ymin,
-                xmin + C.clip_by_value((w - remove), clip_value_min=0),
-                ymin + C.clip_by_value((h - remove), clip_value_min=0)
+                xmin + (w - remove).clip(0),
+                ymin + (h - remove).clip(0)
             )
         else:
             raise RuntimeError("Error in this condition")
@@ -135,7 +135,7 @@ class Boxes(object):
         polys = masks.polygons
         boxes = []
         for poly in polys:
-            box = self.poly_to_box(poly.polygons[0].numpy())
+            box = self.poly_to_box(poly.polygons[0].asnumpy())
             boxes.append(box)
         self.size = (r_c[0] * 2, r_c[1] * 2)
         bbox = Boxes(boxes, self.size, mode="xyxy", use_char_ann=self.use_char_ann)
@@ -182,21 +182,23 @@ class Boxes(object):
     def crop(self, box):
         xmin, ymin, xmax, ymax = self._split_to_xyxy()
         w, h = box[2] - box[0], box[3] - box[1]
-        cropped_xmin = C.clip_by_value((xmin - box[0]), 0, w)
-        cropped_ymin = C.clip_by_value((ymin - box[1]), 0, h)
-        cropped_xmax = C.clip_by_value((xmax - box[0]), 0, w)
-        cropped_ymax = C.clip_by_value((ymax - box[1]), 0, h)
+        cropped_xmin = (xmin - box[0]).clip(0, w)
+        cropped_ymin = (ymin - box[1]).clip(0, h)
+        cropped_xmax = (xmax - box[0]).clip(0, w)
+        cropped_ymax = (ymax - box[1]).clip(0, h)
 
         keep_ind = None
-        not_empty = np.where(
-            (cropped_xmin != cropped_xmax) & (cropped_ymin != cropped_ymax)
-        )[0]
+        x_i = (cropped_xmin != cropped_xmax).asnumpy()
+        y_i = (cropped_ymin != cropped_ymax).asnumpy()
+        loc_i = x_i & y_i
+        loc_i = Tensor(loc_i, mindspore.bool_)
+        not_empty = nonzero(loc_i)[0]
         if len(not_empty) > 0:
-            keep_ind = not_empty
+            keep_ind = not_empty[0]
         cropped_box = self.concat(
             (cropped_xmin, cropped_ymin, cropped_xmax, cropped_ymax)
         )
-        cropped_box = cropped_box[not_empty]
+        cropped_box = cropped_box[not_empty[0]].expand_dims(0)
         bbox = Boxes(cropped_box, (w, h), mode="xyxy", use_char_ann=self.use_char_ann)
         for key, value in self.extra_fields.items():
             if self.use_char_ann:
