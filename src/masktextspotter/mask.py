@@ -23,51 +23,11 @@ def char2num(char):
         num = 0
     return num
 
-def convert_2d_tuple(t):
+def convert_2d_tuple(tuple_2d):
     a = []
-    for i in t:
-        a.extend(list(i))
+    for single_t in tuple_2d:
+        a.extend(list(single_t))
     return a
-
-
-class Mask(object):
-    """
-    This class is unfinished and not meant for use yet
-    It is supposed to contain the mask for an object as
-    a 2d tensor
-    """
-
-    def __init__(self, masks, size, mode):
-        self.masks = masks
-        self.size = size
-        self.mode = mode
-
-    def transpose(self, method):
-        if method not in (FLIP_LEFT_RIGHT, FLIP_TOP_BOTTOM):
-            raise NotImplementedError(
-                "Only FLIP_LEFT_RIGHT and FLIP_TOP_BOTTOM implemented"
-            )
-
-        width, height = self.size
-        if method == FLIP_LEFT_RIGHT:
-            dim = width
-            # idx = 2
-        elif method == FLIP_TOP_BOTTOM:
-            dim = height
-            # idx = 1
-
-        flip_idx = list(range(dim)[::-1])
-        flipped_masks = self.masks.index_select(dim, flip_idx)
-        return Mask(flipped_masks, self.size, self.mode)
-
-    def crop(self, box):
-        w, h = box[2] - box[0], box[3] - box[1]
-
-        cropped_masks = self.masks[:, box[1] : box[3], box[0] : box[2]]
-        return Mask(cropped_masks, size=(w, h), mode=self.mode)
-
-    def resize(self, size, *args, **kwargs):
-        pass
 
 
 class SegmentationMask(object):
@@ -82,6 +42,9 @@ class SegmentationMask(object):
                 level of the list correspond to individual instances,
                 the second level to all the polygons that compose the
                 object, and the third level to the polygon coordinates.
+                (segmentation)
+            size: image_size
+            mode: FLIP_LEFT_RIGHT or FLIP_TOP_BOTTOM
         """
         assert isinstance(polygons, list)
 
@@ -127,9 +90,6 @@ class SegmentationMask(object):
         for polygon in self.polygons:
             polygon.set_size(size)
 
-    def to(self, *args, **kwargs):
-        return self
-
     def __getitem__(self, item):
         if isinstance(item, (int, slice)):
             selected_polygons = [self.polygons[item]]
@@ -171,9 +131,6 @@ class SegmentationMask(object):
 
 
     def convert_seg_map(self, labels, shrink_ratio, seg_size, ignore_difficult=True):
-        # width, height = self.size
-        # assert self.size[0] == seg_size[1]
-        # assert self.size[1] == seg_size[0]
         height, width = seg_size[0], seg_size[1]
         seg_map = np.zeros((1, height, width), dtype=np.uint8)
         training_mask = np.ones((height, width), dtype=np.uint8)
@@ -266,7 +223,7 @@ class Polygons(object):
         cropped_polygons = []
 
         for poly in self.polygons:
-            p = poly.clone()
+            p = poly.copy()
             p[0::2] = p[0::2] - box[0]
             p[1::2] = p[1::2] - box[1]
             cropped_polygons.append(p)
@@ -290,7 +247,7 @@ class Polygons(object):
 
         return Polygons(scaled_polygons, size=size, mode=self.mode)
 
-    def convert(self, mode):
+    def convert(self, mode="mask"):
         width, height = self.size
         if mode == "mask":
             try:
@@ -398,7 +355,7 @@ class CharPolygons(object):
         h = max(h, 1)
         cropped_polygons = []
         for char_box in self.char_boxes:
-            p = char_box.clone()
+            p = char_box.copy()
             p[0::2] = p[0::2] - box[0]
             p[1::2] = p[1::2] - box[1]
             cropped_polygons.append(p)
@@ -470,7 +427,7 @@ class CharPolygons(object):
     def set_size(self, size):
         self.size = size
 
-    def convert(self, mode):
+    def convert(self, mode="char_mask"):
         width, height = self.size
         if mode == "char_mask":
             if not self.use_char_ann:
@@ -600,7 +557,7 @@ class SegmentationCharMask(object):
             flipped, use_char_ann=self.use_char_ann, size=self.size, mode=self.mode, char_num_classes=self.char_num_classes
         )
 
-    def crop(self, box, keep_ind):
+    def crop(self, box, keep_ind=None):
         cropped = []
         w, h = box[2] - box[0], box[3] - box[1]
         if keep_ind is not None:
