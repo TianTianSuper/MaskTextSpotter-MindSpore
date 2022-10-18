@@ -8,8 +8,8 @@ from mindspore.ops import functional as F
 import mindspore.common.dtype as mstype
 from mindspore import context
 
-from .bounding_box import Boxes
-from ..masktextspotter.mask import SegmentationMask
+from src.model_utils.bounding_box import Boxes
+from src.masktextspotter.mask import SegmentationMask
 import numpy as np
 import shapely
 from shapely.geometry import Polygon,MultiPoint
@@ -34,8 +34,11 @@ def boxlist_nms(boxlist, nms_thresh, max_proposals=-1, score_field="score"):
     keep = _box_nms(boxlist.pack_field(score_field))
     if max_proposals > 0:
         keep = keep[:max_proposals]
-    boxlist = boxlist[keep]
+    boxlist = boxlist[keep[1]]
+    # keep = ops.concat(keep)
+    # boxlist = Boxes(keep, boxlist.size, mode)
     return boxlist.convert(mode)
+    return boxlist
 
 
 def remove_small_boxes(boxlist, min_size):
@@ -47,9 +50,11 @@ def remove_small_boxes(boxlist, min_size):
         min_size (int)
     """
     # TODO maybe add an API for querying the ws / hs
+    unbind = P.Unstack(1)
     xywh_boxes = boxlist.convert("xywh").bbox
-    _, _, ws, hs = xywh_boxes.unbind(dim=1)
-    keep = ((ws >= min_size) & (hs >= min_size)).nonzero().squeeze(1)
+    _, _, ws, hs = unbind(xywh_boxes)
+    # _, _, ws, hs = xywh_boxes.unbind(dim=1)
+    keep = Tensor(((ws >= min_size).asnumpy() & (hs >= min_size).asnumpy())).nonzero().squeeze(1)
     return boxlist[keep]
 
 
@@ -89,7 +94,7 @@ def boxlist_iou(boxlist1, boxlist2):
 
     TO_REMOVE = 1
 
-    wh = C.clip_by_value((rb - lt + TO_REMOVE), clip_value_min=0)  # [N,M,2]
+    wh = C.clip_by_value((rb - lt + TO_REMOVE), clip_value_min=Tensor(0.))  # [N,M,2]
     inter = wh[:, :, 0] * wh[:, :, 1]  # [N,M]
 
     iou = inter / (area1[:, None] + area2 - inter)
@@ -172,13 +177,13 @@ def cat_boxlist_gt(bboxes):
 
     fields = set(bboxes[0].fields())
     assert all(set(bbox.fields()) == fields for bbox in bboxes)
-    if bboxes[0].bbox.sum().item() == 0:
+    if bboxes[0].bbox.sum() == 0:
         cat_boxes = Boxes(bboxes[1].bbox, size, mode)
     else:
         cat_boxes = Boxes(_cat([bbox.bbox for bbox in bboxes], dim=0), size, mode)
 
     for field in fields:
-        if bboxes[0].bbox.sum().item() == 0:
+        if bboxes[0].bbox.sum() == 0:
             if field == 'masks':
                 data = _cat_mask([bbox.get_field(field) for bbox in bboxes[1:]])
             else:
