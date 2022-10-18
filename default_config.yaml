@@ -116,6 +116,7 @@ sequence:
   bos_token: 0
   ratio: 0
   max_len: 38
+  shrink_rate: 0.4
 
 # bbox_assign_sampler
 neg_iou_thr: 0.3

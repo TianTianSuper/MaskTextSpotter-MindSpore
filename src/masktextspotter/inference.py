@@ -1,6 +1,6 @@
 import mindspore
 from mindspore import Tensor
-from mindspore import numpy as np
+# from mindspore import numpy as np
 from mindspore import nn, ops
 from mindspore.ops import operations as P
 from ..model_utils.bounding_box import Boxes
@@ -11,6 +11,7 @@ import cv2
 import random
 import pyclipper
 from shapely.geometry import Polygon
+import numpy as np
 
 class SEGPostHandler(nn.Cell):
     def __init__(self, config, train_status=True):
@@ -95,7 +96,7 @@ class SEGPostHandler(nn.Cell):
             boxlist = Boxes(boxes, (image_shape[1], image_shape[0]), mode="xyxy")
             masks = SegmentationMask(polygons, (image_shape[1], image_shape[0]))
             boxlist.add_field('masks', masks)
-            boxlist = boxlist.clip_to_image(remove_empty=False)
+            boxlist = boxlist.clip_to_image()
             boxes_batch.append(boxlist)
             rotated_boxes_batch.append(rotated_boxes)
             polygons_batch.append(polygons)

@@ -10,8 +10,9 @@ from mindspore import Tensor, nn
 from mindspore import dtype as mstype
 from mindspore.ops import normal
 from mindspore.common.initializer import Normal
-from src.masktextspotter.spn import FpnBlock, SEGHead
+from src.masktextspotter.spn import FpnBlock, SEGHead, SEG
 from src.masktextspotter.inference import SEGPostHandler
+from src.masktextspotter.loss import SEGLoss
 from src.model_utils.config import config
 
 class TestSpn(object):
@@ -49,7 +50,28 @@ class TestSpn(object):
             target = pkl.load(f)
         # Warning: This part is delayed.
         test_part = SEGPostHandler(config)
-        output = test_part(seg[0], img.shape[-2:], target)
+        output = test_part(Tensor(img.reshape(3,1,480,640)[0]).expand_dims(0), (img.shape[:2],), target)
+
+    # @pytest.mark.spn
+    # def test_SEG(self):
+    #     with open('unittest/case/img.pkl', 'rb') as f:
+    #         img = pkl.load(f)
+    #     with open('unittest/case/target.pkl', 'rb') as f:
+    #         target = pkl.load(f)
+    #     part = SEG(config)
+    #     outputs = part(Tensor(img, mstype.float32), Tensor(np.ones(img.shape), mstype.float32), target)
+
+
+    # @pytest.mark.spn
+    # def test_loss(self):
+    #     with open('unittest/case/segmentations.pkl', 'rb') as f:
+    #         seg = pkl.load(f)
+    #     with open('unittest/case/img.pkl', 'rb') as f:
+    #         img = pkl.load(f)
+    #     with open('unittest/case/target.pkl', 'rb') as f:
+    #         target = pkl.load(f)
+    #     loss_fun = SEGLoss(config)
+    #     loss = loss_fun(Tensor(img), target)
 
 if __name__ == '__main__':
     from src.model_utils.config import config

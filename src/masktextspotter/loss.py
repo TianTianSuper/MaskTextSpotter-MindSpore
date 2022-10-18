@@ -22,7 +22,7 @@ class SEGLoss(nn.Cell):
 
     def project_masks_on_image(self, mask_polygons, labels, shrink_ratio, image_size):
         seg_map, training_mask = mask_polygons.convert_seg_map(
-            labels, shrink_ratio, image_size, self.config.MODEL.SEG.IGNORE_DIFFICULT
+            labels, shrink_ratio, image_size, True
         )
         return Tensor(seg_map), Tensor(training_mask)
 
@@ -33,7 +33,7 @@ class SEGLoss(nn.Cell):
             segmentation_masks = target_per_image.get_field("masks")
             labels = target_per_image.get_field("labels")
             seg_maps_per_image, training_masks_per_image = self.project_masks_on_image(
-                segmentation_masks, labels, self.config.MODEL.SEG.SHRINK_RATIO, image_size
+                segmentation_masks, labels, self.config.seg.shrink_rate, image_size
             )
             segms.append(seg_maps_per_image)
             training_masks.append(training_masks_per_image)
