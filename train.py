@@ -3,7 +3,7 @@ import os
 from src.model_utils.config import config
 from src.general import MaskTextSpotter3, GeneralLoss
 from src.network_define import LossCallBack
-from src.dataset.generator import DatasetsManager
+from src.dataset.generator import DatasetsManager, NormalManager
 from src.lr_schedule import warmup_lr
 
 import mindspore.common.dtype as mstype
@@ -43,12 +43,14 @@ def train_masktextspotter():
 
     prefix = "MaskTextSpotter.mindrecord"
     mindrecord_dir = config.mindrecord_dir
-    mindrecord_file = os.path.join(mindrecord_dir, prefix + "0")
+    mindrecord_file = os.path.join(mindrecord_dir, prefix)
     if rank == 0 and not os.path.exists(mindrecord_file):
-        dm = DatasetsManager(config)
-        dm.init_mindrecords()
-        dataset = dm.init_dataset()
-    dataset_size = dataset.get_dataset_size()
+        # dm = DatasetsManager(config)
+        # dm.init_mindrecords()
+        # dataset = dm.init_dataset()
+        dm = NormalManager(config)
+        dataset = dm.form_dataset()
+    dataset_size = dm.get_size()
     
     net = MaskTextSpotter3(config)
     net.set_train(True)

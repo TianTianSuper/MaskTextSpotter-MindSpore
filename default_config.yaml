@@ -25,10 +25,10 @@ between_thresholds: -2
 datasets_root: "./datasets"
 datasets_name:
 - "icdar2013"
-- "icdar2015"
+# - "icdar2015"
 # - "synthtext"
 # - "total_text"
-- "scut-eng-char"
+# - "scut-eng-char"
 
 # icdar_2013_train: "icdar2013/train_images", "icdar2013/train_gts"
 # icdar_2013_test: "icdar2013/test_images", "icdar2013/test_gts"
