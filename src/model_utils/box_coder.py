@@ -27,11 +27,11 @@ class BoxCoder(object):
         targets_dw = ww * np.log(gt_widths / ex_widths)
         targets_dh = wh * np.log(gt_heights / ex_heights)
 
-        targets = ops.stack((targets_dx, targets_dy, targets_dw, targets_dh), dim=1)
+        targets = ops.stack((targets_dx, targets_dy, targets_dw, targets_dh), axis=1)
         return targets
 
     def decode(self, codes, boxes):
-        boxes = boxes.astype(codes.type)
+        boxes = boxes.astype(codes.dtype)
         remove = 1
         widths = boxes[:, 2] - boxes[:, 0] + remove
         heights = boxes[:, 3] - boxes[:, 1] + remove
@@ -45,8 +45,8 @@ class BoxCoder(object):
         dh = codes[:, 3::4] / wh
 
         # Prevent sending too large values into torch.exp()
-        dw = C.clip_by_value(dw, max=self.bbox_xform_clip)
-        dh = C.clip_by_value(dh, max=self.bbox_xform_clip)
+        dw = C.clip_by_value(dw, clip_value_max=self.clip)
+        dh = C.clip_by_value(dh, clip_value_max=self.clip)
 
         pred_ctr_x = dx * widths[:, None] + ctr_x[:, None]
         pred_ctr_y = dy * heights[:, None] + ctr_y[:, None]
