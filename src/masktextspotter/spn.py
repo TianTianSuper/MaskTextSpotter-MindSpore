@@ -104,7 +104,6 @@ if __name__ == '__main__':
     from mindspore import context
     context.set_context(device_target='GPU',mode=context.PYNATIVE_MODE)
 
-
     test_part = SEGHead(256, config)
     input_data = Tensor(np.ones(327680).reshape((1, 5, 256, 16, 16)).T, mstype.float32)
     output = test_part(input_data)

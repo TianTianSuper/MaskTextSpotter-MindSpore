@@ -1,5 +1,6 @@
 import os
 import sys
+import mindspore
 sys.path.append(os.getcwd())
 
 import pytest
@@ -29,18 +30,30 @@ class TestSpn(object):
             test_part = SEGHead(256, config)
             input_data = Tensor(np.ones(327680).reshape((1, 5, 256, 16, 16)).T, mstype.float32)
             output = test_part(input_data)
+        # with open('unittest/case/img.pkl', 'rb') as f:
+        #     img = pkl.load(f)
+        # img = Tensor(img, mstype.float32)
+        # img_2 = img.copy()
+        # img_all = mindspore.ops.concat((img,img_2))
+        # img_all = img_all.reshape((2, 1,3,480,640))
+        # test_part = SEGHead(3, config)
+        # output = test_part(img_all)
     
     @pytest.mark.spn
     def test_SegPost(self):
+        with open('unittest/case/segmentations.pkl', 'rb') as f:
+            seg = pkl.load(f)
+        with open('unittest/case/img.pkl', 'rb') as f:
+            img = pkl.load(f)
+        with open('unittest/case/target.pkl', 'rb') as f:
+            target = pkl.load(f)
         # Warning: This part is delayed.
         test_part = SEGPostHandler(config)
-        input_data = Tensor(np.ones(327680).reshape((1, 5, 256, 16, 16)).T, mstype.float32)
-        img_size = Tensor((16,16), dtype=mstype.float32)
-        output = test_part(input_data, img_size, input_data)
+        output = test_part(seg[0], img.shape[-2:], target)
 
 if __name__ == '__main__':
     from src.model_utils.config import config
     from mindspore import context
-    context.set_context(device_target='GPU',mode=context.PYNATIVE_MODE)
+    context.set_context(device_target='CPU',mode=context.PYNATIVE_MODE)
 
     pytest.main(['-vv','-s','--html=unittest/results/spn.html', '-m=spn'])

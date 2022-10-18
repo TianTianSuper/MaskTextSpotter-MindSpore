@@ -103,7 +103,7 @@ class SEGPostHandler(nn.Cell):
         return boxes_batch, rotated_boxes_batch, polygons_batch, scores_batch
 
     def binarize(self, pred):
-        return pred > self.binary_thresh
+        return ops.less(self.binary_thresh, Tensor(pred))
 
     def boxes_from_bitmap(self, pred, bitmap, dest_width, dest_height):
         """
