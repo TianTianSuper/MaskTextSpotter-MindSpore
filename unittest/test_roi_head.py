@@ -30,6 +30,17 @@ class TestRoiBox(object):
         part = Fpn2Mlp(config)
         out = part(Tensor(img), target)
 
+    def test_ROIBoxHead(self):
+        # Warning: No enough resource to test
+        with open('unittest/case/target.pkl', 'rb') as f:
+            target = pkl.load(f)
+        with open('unittest/case/segmentations.pkl', 'rb') as f:
+            seg = pkl.load(f)
+        with open('unittest/case/img.pkl', 'rb') as f:
+            img = pkl.load(f)
+        part = ROIBoxHead(config)
+        out = part(img, seg, target)
+
 
 if __name__ == '__main__':
     from src.model_utils.config import config
