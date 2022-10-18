@@ -11,11 +11,11 @@
 | proposal(SPN) | `src/masktextspotter/loss.py`      | :warning:          | no appropriate case for testing loss                         |
 | proposal(SPN) | `src/masktextspotter/spn.py`       | :warning:          | no appropriate case for testing SEG                          |
 | seg_mask      | `src/masktextspotter/mask.py`      | :white_check_mark: |                                                              |
-| roi           | `src/roi/pooler.py`                | :black_circle:     |                                                              |
+| roi           | `src/roi/pooler.py`                | :black_circle:     | waiting                                                      |
 | roi           | `src/roi/roi_align.py`             | :white_circle:     | implemented from maskrcnn(mindspore)                         |
-| roi           | `src/roi/roi_combine.py`           | :black_circle:     |                                                              |
+| roi           | `src/roi/roi_combine.py`           | :black_circle:     | waiting                                                      |
 | roi           | `src/roi/box_head`                 | :warning:          | can be built when testing `train.py` but no enough resource for single test |
-| roi           | `src/roi/mask_head`                | :black_circle:     | can be built when testing `train.py`                         |
+| roi           | `src/roi/mask_head`                | :black_circle:     | can be built when testing `train.py` and waiting now         |
 | utils         | `src/model_utils/assigner.py`      | :white_circle:     | no use                                                       |
 | utils (bbox)  | `src/model_utils/bbox_ops.py`      | :white_check_mark: |                                                              |
 | utils (bbox)  | `src/model_utils/bounding_box.py`  | :white_check_mark: |                                                              |
@@ -29,7 +29,7 @@
 | utils         | `src/model_utils/tools.py`         | :white_check_mark: |                                                              |
 | main          | `src/general.py`                   | :white_check_mark: | tested with `train.py` and passed successfully               |
 | main          | `src/lr_schedule.py`               | :white_check_mark: | tested with `train.py` and passed successfully               |
-| main          | `src/network_define.py`            | :black_circle:     |                                                              |
+| main          | `src/network_define.py`            | :black_circle:     | waiting                                                      |
 | train         | `train.py`                         | :warning:          | passed but no enough resource for futher testing             |
 
 进度状态定义

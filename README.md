@@ -10,8 +10,8 @@
 | ------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | 支持分析     | MindSpore支持分析（算子/API）等支持分析文档，<br>需包括与Pytorch API差异点（接口名称/接口参数等不同） | :white_check_mark: <a href=https://github.com/TianTianSuper/MaskTextSpotter-MindSpore/tree/master/docs/diff/api>支持分析文档</a> |
 | 开发规格确认 | 根据论文实验描述/业界pytorch仓规格支持情况，<br>确认需开发的模型规则 | :white_check_mark: <a href=https://github.com/TianTianSuper/MaskTextSpotter-MindSpore#%E5%BC%80%E5%8F%91%E8%A7%84%E6%A0%BC>开发规格</a> |
-| 建仓         | github建立模型的repo，记录模型开发的过程                     | :white_check_mark: 本公开repo                                          |
-| 代码完成     | 数据处理、模型定义、模型训练，<br>各部分需完成unit test；<br>完成各模块的文档及代码示例说明和心得 | :white_check_mark: <a href=src/dataset>数据处理</a><br>:white_check_mark: <a href=src/>模型定义</a><br>:white_check_mark: <a href=train.py>模型训练</a><br>:large_blue_circle: <a href=unittest>unit test</a><br>:large_blue_circle: <a href=docs/code>代码示例</a><br>:large_blue_circle: <a href=docs/code>心得</a> |
+| 建仓         | github建立模型的repo，记录模型开发的过程                     | :white_check_mark: 本公开repo                                |
+| 代码完成     | 数据处理、模型定义、模型训练，<br>各部分需完成unit test；<br>完成各模块的文档及代码示例说明和心得 | :white_check_mark: <a href=src/dataset>数据处理</a><br>:white_check_mark: <a href=src/>模型定义</a><br>:white_check_mark: <a href=train.py>模型训练</a><br>:ballot_box_with_check: <a href=unittest>unit test</a><br>:white_check_mark: <a href=docs/code>代码示例</a><br>:large_blue_circle: <a href=docs/code>心得</a> |
 
 
 
