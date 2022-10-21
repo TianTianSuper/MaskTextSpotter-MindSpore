@@ -35,10 +35,10 @@ def project_char_masks_on_boxes(
     word_targets = []
     M_H, M_W = discretization_size[0], discretization_size[1]
     proposals = proposals.convert("xyxy")
-    assert segmentation_masks.shape == proposals.shape, "{}, {}".format(
+    assert segmentation_masks.size == proposals.size, "{}, {}".format(
         segmentation_masks, proposals
     )
-    assert segmentation_char_masks.shape == proposals.shape, "{}, {}".format(
+    assert segmentation_char_masks.size == proposals.size, "{}, {}".format(
         segmentation_char_masks, proposals
     )
     # TODO put the proposals on the CPU, as the representation for the
@@ -72,11 +72,11 @@ def project_char_masks_on_boxes(
             np.empty(0, dtype=mindspore.int64),
         )
     return (
-        ops.stack(masks, dim=0),
-        ops.stack(char_masks, dim=0),
-        ops.stack(char_mask_weights, dim=0),
-        ops.stack(decoder_targets, dim=0),
-        ops.stack(word_targets, dim=0),
+        ops.stack(masks, axis=0),
+        ops.stack(char_masks, axis=0),
+        ops.stack(char_mask_weights, axis=0),
+        ops.stack(decoder_targets, axis=0),
+        ops.stack(word_targets, axis=0),
     )
 
 def keep_only_positive_boxes(boxes, batch_size_per_im):
@@ -101,8 +101,13 @@ def keep_only_positive_boxes(boxes, batch_size_per_im):
             inds_mask[inds[batch_size_per_im:]] = 0
         else:
             new_inds = inds
-        positive_boxes.append(boxes_per_image[new_inds])
-        positive_inds.append(inds_mask)
+        # Add loop
+        for i in boxes_per_image:
+            positive_boxes.append(i)
+        for i in inds_mask:
+            positive_inds.append(i)
+        # positive_boxes.append(boxes_per_image[new_inds])
+        # positive_inds.append(inds_mask)
     return positive_boxes, positive_inds
 
 
@@ -379,7 +384,7 @@ class ROIMaskHead(nn.Cell):
             x = x * masks.unsqueeze(1)
         return x
 
-    def forward(self, features, proposals, targets=None):
+    def construct(self, features, proposals, targets=None):
         """
         Arguments:
             features (list[Tensor]): feature-maps from possibly several levels

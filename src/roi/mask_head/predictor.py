@@ -41,7 +41,7 @@ class SeqCharMaskRCNNC4Predictor(nn.Cell):
         self.char_mask_fcn_logits = nn.Conv2d(dim_reduced, char_num_classes, 1, 1, weight_init=weight_init, bias_init=bias_init)
         self.seq = SequencePredictor(config, dim_reduced)
 
-    def forward(self, x, decoder_targets=None, word_targets=None):
+    def construct(self, x, decoder_targets=None, word_targets=None):
         x = nn.ReLU()(self.conv5_mask(x))
         if self.training:
             loss_seq_decoder = self.seq(

@@ -28,8 +28,8 @@ class TestRoiBox(object):
         with open('unittest/case/img.pkl', 'rb') as f:
             img = pkl.load(f)
         part = Fpn2Mlp(config)
-        out = part(Tensor(img), target)
 
+    @pytest.mark.rbh
     def test_ROIBoxHead(self):
         # Warning: No enough resource to test
         with open('unittest/case/target.pkl', 'rb') as f:
@@ -39,7 +39,6 @@ class TestRoiBox(object):
         with open('unittest/case/img.pkl', 'rb') as f:
             img = pkl.load(f)
         part = ROIBoxHead(config)
-        out = part(img, seg, target)
 
 
 if __name__ == '__main__':
