@@ -33,16 +33,16 @@ class SEGLoss(nn.Cell):
             segmentation_masks = target_per_image.get_field("masks")
             labels = target_per_image.get_field("labels")
             seg_maps_per_image, training_masks_per_image = self.project_masks_on_image(
-                segmentation_masks, labels, self.config.seg.shrink_rate, image_size
+                segmentation_masks, labels, self.config.sequence.shrink_rate, image_size
             )
             segms.append(seg_maps_per_image)
             training_masks.append(training_masks_per_image)
         return ops.stack(segms), ops.stack(training_masks)
 
     def construct(self, preds, targets):
-        image_size = (preds.shape[2], preds.shape[3])
+        image_size = (preds.shape[1], preds.shape[2])
         segm_targets, masks = self.prepare_targets(targets, image_size)
-        segm_targets = segm_targets.astype(mindspore.float32)
+        segm_targets = segm_targets.astype(mindspore.float32).squeeze()
         masks = masks.astype(mindspore.float32)
         seg_loss = self.dice_loss(preds, segm_targets, masks)
         return seg_loss

@@ -433,6 +433,36 @@ class NormalManager:
         self.size = len(images_ls)
         return images_ls, targets_ls
     
+    def generate_single(self, image_files_path, gts_files_path, name):
+        with open(os.path.join(image_files_path, name), 'rb') as f:
+            img = f.read()
+        with open(os.path.join(gts_files_path, name+'.txt'), 'rb') as f:
+            gts = f.read()
+        
+        image, words, boxes, charsbbs, segmentations, labels = self.transfer(img, gts)
+        image_shape = image.shape[-2:]
+        target = Boxes(
+            boxes[:, :4], image_shape, mode="xyxy", use_char_ann=self.use_charann
+        )
+        if self.ignore_difficult:
+            labels = msnp.from_numpy(np.array(labels))
+        else:
+            labels = msnp.ones(len(boxes))
+        target.add_field("labels", labels)
+        masks = SegmentationMask(segmentations, image_shape)
+        target.add_field("masks", masks)
+        if words[0] == "":
+            use_char_ann = False
+        else:
+            use_char_ann = True
+        if not self.use_charann:
+            use_char_ann = False
+        char_masks = SegmentationCharMask(
+            charsbbs, words=words, use_char_ann=use_char_ann, size=image_shape, char_num_classes=len(self.char_classes)
+        )
+        target.add_field("char_masks", char_masks)
+        return image, target
+    
     def get(self):
         images_ls, target_ls = self.generate()
         for img, target in zip(images_ls, target_ls):

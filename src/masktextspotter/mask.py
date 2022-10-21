@@ -134,10 +134,10 @@ class SegmentationMask(object):
         height, width = seg_size[0], seg_size[1]
         seg_map = np.zeros((1, height, width), dtype=np.uint8)
         training_mask = np.ones((height, width), dtype=np.uint8)
-        for poly, label in zip(self.polygons, labels):
+        for poly, label in zip(self.polygons, labels.expand_dims(0)):
             poly = poly.get_polygons()[0]
             poly = poly.reshape((-1, 2)).asnumpy()
-            if ignore_difficult and label.item() == -1:
+            if ignore_difficult and label.item(0) == -1:
                 cv2.fillPoly(training_mask, poly.astype(np.int32)[np.newaxis, :, :], 0)
                 continue
             if poly.shape[0] < 4:

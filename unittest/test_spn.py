@@ -52,26 +52,26 @@ class TestSpn(object):
         test_part = SEGPostHandler(config)
         output = test_part(Tensor(img.reshape(3,1,480,640)[0]).expand_dims(0), (img.shape[:2],), target)
 
-    # @pytest.mark.spn
-    # def test_SEG(self):
-    #     with open('unittest/case/img.pkl', 'rb') as f:
-    #         img = pkl.load(f)
-    #     with open('unittest/case/target.pkl', 'rb') as f:
-    #         target = pkl.load(f)
-    #     part = SEG(config)
-    #     outputs = part(Tensor(img, mstype.float32), Tensor(np.ones(img.shape), mstype.float32), target)
+    @pytest.mark.spn
+    def test_SEG(self):
+        # Warning: due to the warning in SEGHead
+        # this case will raise IndexError
+        from src.dataset.generator import NormalManager
+        data_generator = NormalManager(config)
+        img, target = data_generator.generate_single('datasets/icdar2013/train_images', 'datasets/icdar2013/train_gts', '100.jpg')
+        with pytest.raises(IndexError):
+            part = SEG(config)
+            outputs = part(Tensor(np.ones((1, 3, 480, 640)), mstype.float32), Tensor(np.ones((1, 3, 3, 480, 640)), mstype.float32), target)
 
 
-    # @pytest.mark.spn
-    # def test_loss(self):
-    #     with open('unittest/case/segmentations.pkl', 'rb') as f:
-    #         seg = pkl.load(f)
-    #     with open('unittest/case/img.pkl', 'rb') as f:
-    #         img = pkl.load(f)
-    #     with open('unittest/case/target.pkl', 'rb') as f:
-    #         target = pkl.load(f)
-    #     loss_fun = SEGLoss(config)
-    #     loss = loss_fun(Tensor(img), target)
+    @pytest.mark.spn
+    def test_loss(self):
+        from src.dataset.generator import NormalManager
+        data_generator = NormalManager(config)
+        img, target = data_generator.generate_single('datasets/icdar2013/train_images', 'datasets/icdar2013/train_gts', '100.jpg')
+
+        loss_fun = SEGLoss(config)
+        loss = loss_fun(Tensor(np.ones((5,480,640))), target)
 
 if __name__ == '__main__':
     from src.model_utils.config import config

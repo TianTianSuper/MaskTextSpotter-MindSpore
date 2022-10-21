@@ -8,8 +8,8 @@
 | backbone      | `src/masktextspotter/fpn_neck.py`  | :white_check_mark: |                                                              |
 | backbone      | `src/masktextspotter/resnet50.py`  | :white_check_mark: |                                                              |
 | proposal(SPN) | `src/masktextspotter/inference.py` | :white_check_mark: |                                                              |
-| proposal(SPN) | `src/masktextspotter/loss.py`      | :warning:          | no appropriate case for testing loss                         |
-| proposal(SPN) | `src/masktextspotter/spn.py`       | :warning:          | no appropriate case for testing SEG                          |
+| proposal(SPN) | `src/masktextspotter/loss.py`      | :white_check_mark: |                                                              |
+| proposal(SPN) | `src/masktextspotter/spn.py`       | :white_check_mark: |                                                              |
 | seg_mask      | `src/masktextspotter/mask.py`      | :white_check_mark: |                                                              |
 | roi           | `src/roi/pooler.py`                | :black_circle:     | waiting                                                      |
 | roi           | `src/roi/roi_align.py`             | :white_circle:     | implemented from maskrcnn(mindspore)                         |

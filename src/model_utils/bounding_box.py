@@ -214,9 +214,10 @@ class Boxes(object):
         return self.bbox.shape[0]
     
     def __getitem__(self, item):
-        bbox = Boxes(self.bbox[item:item, :], self.size, self.mode, self.use_char_ann)
+        required_bbox = self.bbox[item].expand_dims(0)
+        bbox = Boxes(required_bbox, self.size, self.mode, self.use_char_ann)
         for key, value in self.extra_fields.items():
-            bbox.add_field(key, value[item:item])
+            bbox.add_field(key, value[item])
         return bbox
 
     def clip_to_image(self):
