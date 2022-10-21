@@ -29,7 +29,7 @@
 | utils         | `src/model_utils/tools.py`         | :white_check_mark: |                                                              |
 | main          | `src/general.py`                   | :white_check_mark: | tested with `train.py` and passed successfully               |
 | main          | `src/lr_schedule.py`               | :white_check_mark: | tested with `train.py` and passed successfully               |
-| main          | `src/network_define.py`            | :black_circle:     | waiting                                                      |
+| main          | `src/network_define.py`            | :white_check_mark: |                                                              |
 | train         | `train.py`                         | :warning:          | passed but no enough resource for futher testing             |
 
 进度状态定义
